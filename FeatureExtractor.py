@@ -11,18 +11,31 @@ class FeatureExtractor:
         self.__get_hashtags()
 
         hashtag_features = {}
+        hashtag_features["char_length"] = self.__get_hashtags_length()
+        hashtag_features["contains_digits"] = self.__get_hashtags_contain_digits()
 
+        return hashtag_features
+        
+    
+    def __get_hashtags_contain_digits(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes whether they contain digits or not
+        """
+        contain_digits = {}
+        for hashtag in self.hashtags:
+            contain_digits[hashtag["text"]] = any(char.isdigit() for char in hashtag["text"])
+        
+        return contain_digits
+
+    def __get_hashtags_length(self):
+        """
+            returns a dictionary of (hashtag, hashtagLength) attributes
+        """
         char_length = {}
         for hashtag in self.hashtags:
             char_length[hashtag["text"]] = hashtag["indices"][1] - hashtag["indices"][0] - 1
         
-        hashtag_features["char_length"] = char_length
-        
-
-        return hashtag_features
-        
-        
-
+        return char_length
 
     def __get_hashtags(self):
         """
