@@ -1,9 +1,12 @@
 import re
 
+
 class FeatureExtractor:
 
+    __THRESHOLD = 0.4
+
     def __init__(self, tweets):
-        self.tweets = tweets
+        self.tweets = list(tweets)
 
     def get_hashtag_features(self):
         """
@@ -21,8 +24,90 @@ class FeatureExtractor:
         hashtag_features["any_caps"] = self.__get_hashtags_any_caps()
         hashtag_features["no_caps"] = self.__get_hashtags_no_caps()
         hashtag_features["special_signals"] = self.__get_hashtags_special_signals()
+        hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
 
         return hashtag_features
+
+    def __get_hashtags_cooccurance(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes.
+            True is given if more than 40% of the specific hashtag occurences are collocated with other hashtags
+        """
+
+        hashtag_appearance = {}
+        hashtag_cooccurance = {}
+        for tweet in self.tweets:
+            #simple tweet
+            first_level_potential_hashtags = tweet["entities"]["hashtags"]
+            if len(first_level_potential_hashtags) == 1:
+                
+                for hashtag in tweet["entities"]["hashtags"]:
+                    if not hashtag["text"] in hashtag_appearance:
+                        hashtag_appearance[hashtag["text"]] = 1
+                        hashtag_cooccurance[hashtag["text"]] = 0 #we are sure that it wont exist here either. We initialize it with value 0 as long as there is no coexistence
+                    else:
+                        hashtag_appearance[hashtag["text"]] += 1
+
+            if len(first_level_potential_hashtags) > 1: #meaning at least 2 hashtags coexist
+                for hashtag in tweet["entities"]["hashtags"]:
+                    if not hashtag["text"] in hashtag_appearance:
+                        hashtag_appearance[hashtag["text"]] = 1
+                        hashtag_cooccurance[hashtag["text"]] = 1 #we are sure that it wont exist here either
+                    else:
+                        hashtag_appearance[hashtag["text"]] += 1
+                        hashtag_cooccurance[hashtag["text"]] += 1
+    
+            #extended_tweet
+            if "extended_tweet" in tweet:
+                extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
+                if len(extended_potential_hashtags) == 1:
+                    for hashtag in extended_potential_hashtags:
+                        if not hashtag["text"] in hashtag_appearance:
+                            hashtag_appearance[hashtag["text"]] = 1
+                            hashtag_cooccurance[hashtag["text"]] = 0
+                        else:
+                            hashtag_appearance[hashtag["text"]] += 1
+
+                if len(extended_potential_hashtags) > 1:
+                    
+                    for hashtag in extended_potential_hashtags:
+                        if not hashtag["text"] in hashtag_appearance:
+                            hashtag_appearance[hashtag["text"]] = 1
+                            hashtag_cooccurance[hashtag["text"]] = 1
+                        else:
+                            hashtag_appearance[hashtag["text"]] += 1
+                            hashtag_cooccurance[hashtag["text"]] += 1
+
+            #retweet
+            if "retweeted_status" in tweet:
+                retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
+                if len(retweeted_potential_hashtags) == 1:
+                    for hashtag in retweeted_potential_hashtags:
+                        if not hashtag["text"] in hashtag_appearance:
+                            hashtag_appearance[hashtag["text"]] = 1
+                            hashtag_cooccurance[hashtag["text"]] = 0
+                        else:
+                            hashtag_appearance[hashtag["text"]] += 1
+
+                if len(retweeted_potential_hashtags) > 1:
+                    for hashtag in retweeted_potential_hashtags:
+                        if not hashtag["text"] in hashtag_appearance:
+                            hashtag_appearance[hashtag["text"]] = 1
+                            hashtag_cooccurance[hashtag["text"]] = 1
+                        else:
+                            hashtag_appearance[hashtag["text"]] += 1
+                            hashtag_cooccurance[hashtag["text"]] += 1
+            
+        ###calculate ratio so as to consider 40% threshold
+        ratio_hashtag_cooccurance = {}
+        for hashtag, value in hashtag_appearance.items():
+            ratio_hashtag_cooccurance[hashtag] = hashtag_cooccurance[hashtag] / float(value)
+
+        for hashtag,value in ratio_hashtag_cooccurance.items():
+            ratio_hashtag_cooccurance[hashtag] = True if ratio_hashtag_cooccurance[hashtag] >= self.__THRESHOLD else False
+            
+        return ratio_hashtag_cooccurance
+            
 
     def __get_hashtags_special_signals(self):
         """
