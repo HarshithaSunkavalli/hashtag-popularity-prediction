@@ -4,7 +4,23 @@ class FeatureExtractor:
         self.tweets = tweets
 
     def get_hashtag_features(self):
+        """
+            returns  the following hashtag related features:
+                character length,
+        """
         self.__get_hashtags()
+
+        hashtag_features = {}
+
+        char_length = {}
+        for hashtag in self.hashtags:
+            char_length[hashtag["text"]] = hashtag["indices"][1] - hashtag["indices"][0] - 1
+        
+        hashtag_features["char_length"] = char_length
+        
+
+        return hashtag_features
+        
         
 
 
