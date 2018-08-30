@@ -1,3 +1,5 @@
+import re
+
 class FeatureExtractor:
 
     def __init__(self, tweets):
@@ -11,12 +13,61 @@ class FeatureExtractor:
         self.__get_hashtags()
 
         hashtag_features = {}
+        #char length feature
         hashtag_features["char_length"] = self.__get_hashtags_length()
+        #orthography related features
         hashtag_features["contains_digits"] = self.__get_hashtags_contain_digits()
+        hashtag_features["all_caps"] = self.__get_hashtags_all_caps()
+        hashtag_features["any_caps"] = self.__get_hashtags_any_caps()
+        hashtag_features["no_caps"] = self.__get_hashtags_no_caps()
+        hashtag_features["special_signals"] = self.__get_hashtags_special_signals()
 
         return hashtag_features
+
+    def __get_hashtags_special_signals(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes whether they contain special signals, such as gooood or !!!!, or not.
+            3 or more consecutive letters or symbols required
+        """
+
+        special_signals = {}
+        for hashtag in self.hashtags:
+            temp_list = re.findall(r'((\w)\2{2,})', hashtag["text"])
+            special_signals[hashtag["text"]] = True if len(temp_list) else False 
         
-    
+        return special_signals
+
+    def __get_hashtags_no_caps(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes whether they contain only lowercase letters or not
+        """
+        no_caps = {}
+        for hashtag in self.hashtags:
+            no_caps[hashtag["text"]] = hashtag["text"].islower()
+        
+        return no_caps
+
+    def __get_hashtags_any_caps(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes whether they contain any capital letters or not
+        """
+        any_caps = {}
+        for hashtag in self.hashtags:
+            any_caps[hashtag["text"]] = any(char.isupper() for char in hashtag["text"])
+        
+        return any_caps
+
+    def __get_hashtags_all_caps(self):
+        """
+            returns a dictionary of (hashtag, true/false) attributes whether they contain only capital letters or not
+        """
+        all_caps = {}
+        for hashtag in self.hashtags:
+            all_caps[hashtag["text"]] = hashtag["text"].isupper()
+        
+        return all_caps
+
+
     def __get_hashtags_contain_digits(self):
         """
             returns a dictionary of (hashtag, true/false) attributes whether they contain digits or not
