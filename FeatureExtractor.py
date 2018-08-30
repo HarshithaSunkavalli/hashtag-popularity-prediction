@@ -1,6 +1,5 @@
 import re
 
-
 class FeatureExtractor:
 
     __THRESHOLD = 0.4
@@ -36,12 +35,15 @@ class FeatureExtractor:
 
         hashtag_appearance = {}
         hashtag_cooccurance = {}
+
+       
+        
         for tweet in self.tweets:
             #simple tweet
             first_level_potential_hashtags = tweet["entities"]["hashtags"]
             if len(first_level_potential_hashtags) == 1:
                 
-                for hashtag in tweet["entities"]["hashtags"]:
+                for hashtag in first_level_potential_hashtags:
                     if not hashtag["text"] in hashtag_appearance:
                         hashtag_appearance[hashtag["text"]] = 1
                         hashtag_cooccurance[hashtag["text"]] = 0 #we are sure that it wont exist here either. We initialize it with value 0 as long as there is no coexistence
@@ -49,7 +51,7 @@ class FeatureExtractor:
                         hashtag_appearance[hashtag["text"]] += 1
 
             if len(first_level_potential_hashtags) > 1: #meaning at least 2 hashtags coexist
-                for hashtag in tweet["entities"]["hashtags"]:
+                for hashtag in first_level_potential_hashtags:
                     if not hashtag["text"] in hashtag_appearance:
                         hashtag_appearance[hashtag["text"]] = 1
                         hashtag_cooccurance[hashtag["text"]] = 1 #we are sure that it wont exist here either
@@ -197,7 +199,7 @@ class FeatureExtractor:
                 retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
                 if len(retweeted_potential_hashtags) > 0:
                     hashtags.extend(retweeted_potential_hashtags)
-        
+
         self.hashtags = hashtags
 
         
