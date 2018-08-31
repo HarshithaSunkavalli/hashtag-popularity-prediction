@@ -3,17 +3,21 @@ import re
 class FeatureExtractor:
 
     __THRESHOLD = 0.4
+    """attributes: 
+        self.tweets
+        self.tweet_hashtag_map
+        self.hashtags
+    """
 
     def __init__(self, tweets):
         self.tweets = list(tweets)
 
     def get_hashtag_features(self):
         """
-            returns  the following hashtag related features:
-                character length,
+            returns the hashtag related features
         """
         self.__get_hashtags()
-
+        
         hashtag_features = {}
         #char length feature
         hashtag_features["char_length"] = self.__get_hashtags_length()
@@ -23,6 +27,7 @@ class FeatureExtractor:
         hashtag_features["any_caps"] = self.__get_hashtags_any_caps()
         hashtag_features["no_caps"] = self.__get_hashtags_no_caps()
         hashtag_features["special_signals"] = self.__get_hashtags_special_signals()
+        #co-occurance feature
         hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
 
         return hashtag_features
@@ -34,9 +39,7 @@ class FeatureExtractor:
         """
 
         hashtag_appearance = {}
-        hashtag_cooccurance = {}
-
-       
+        hashtag_cooccurance = {}  
         
         for tweet in self.tweets:
             #simple tweet
@@ -178,29 +181,46 @@ class FeatureExtractor:
     def __get_hashtags(self):
         """
             Private method used to extract hashtags from the given tweets.
-            hashtags list form: [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}]
+            self.tweet_hashtag_map: {'994633657141813248': [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}], '54691802283900928': [{'text': 'PGP', 'indices': [130, 134]}]}
+            where key is the tweet id and value is a list of containing hashtags
+            self.hashtags: [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}]
         """
 
-        hashtags = []
+        tweet_hashtag_map = {}
         for tweet in self.tweets:
-            #simple tweet
-            first_level_potential_hashtags = tweet["entities"]["hashtags"]
-            if len(first_level_potential_hashtags) > 0:
-                hashtags.extend(first_level_potential_hashtags)
+            self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
 
-            #extended_tweet
-            if "extended_tweet" in tweet:
-                extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
-                if len(extended_potential_hashtags) > 0:
-                    hashtags.extend(extended_potential_hashtags)
-
-            #retweet
-            if "retweeted_status" in tweet:
-                retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
-                if len(retweeted_potential_hashtags) > 0:
-                    hashtags.extend(retweeted_potential_hashtags)
-
+        hashtags = []
+        for hashtag_list in tweet_hashtag_map.values():
+            for hashtag in hashtag_list:
+                hashtags.append(hashtag)
+        
+        self.tweet_hashtag_map = tweet_hashtag_map
         self.hashtags = hashtags
+
+    def __get_hashtags_from_tweet(self, tweet, tweet_hashtag_map):
+        """
+            Private method used to extract hashtags from the given tweet.
+        """
+        hashtags = []
+        #simple tweet
+        first_level_potential_hashtags = tweet["entities"]["hashtags"]
+        if len(first_level_potential_hashtags) > 0:
+            hashtags.extend(first_level_potential_hashtags)
+
+        #extended_tweet
+        if "extended_tweet" in tweet:
+            extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
+            if len(extended_potential_hashtags) > 0:
+                hashtags.extend(extended_potential_hashtags)
+
+        #retweet
+        if "retweeted_status" in tweet:
+            retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
+            if len(retweeted_potential_hashtags) > 0:
+                hashtags.extend(retweeted_potential_hashtags)
+
+        tweet_hashtag_map[tweet["id_str"]] = hashtags
 
         
         
