@@ -1,4 +1,5 @@
 import re
+import DbHandler
 
 class FeatureExtractor:
 
@@ -7,10 +8,12 @@ class FeatureExtractor:
         self.tweets
         self.tweet_hashtag_map
         self.hashtags
+        self.dbHandler
     """
 
-    def __init__(self, tweets):
+    def __init__(self, tweets, dbHandler):
         self.tweets = list(tweets)
+        self.dbHandler = dbHandler
 
     def get_hashtag_features(self):
         """
@@ -29,8 +32,30 @@ class FeatureExtractor:
         hashtag_features["special_signals"] = self.__get_hashtags_special_signals()
         #co-occurance feature
         hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
+        #location feature
+        hashtag_features["location"] = self.__get_hashtags_location()
 
         return hashtag_features
+
+    def __get_hashtags_location(self):
+        """
+            finds the location of each hashtag inside the corresponding tweet text
+            returns a dictionary of (hashtag, 0/1/2) attributes.
+            0->prefix, 1->infix, 2->postfix
+        """
+        for tweet_hashtag in self.tweet_hashtag_map.items():
+            tweet_id = tweet_hashtag[0]
+            tweet = self.dbHandler.getTweet(tweet_id)
+
+            if "extended_tweet" in tweet :
+                text = tweet["extended_tweet"]["full_text"]
+            elif "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
+                text = tweet["retweeted_status"]["text"]
+            elif "retweeted_status" in tweet and (tweet["retweeted_status"]["truncated"]):
+                text = tweet["retweeted_status"]["extended_tweet"]["full_text"]
+            else:
+                text = tweet["text"]  
+            print(text)
 
     def __get_hashtags_cooccurance(self):
         """
@@ -168,9 +193,15 @@ class FeatureExtractor:
             if len(extended_potential_hashtags) > 0:
                 hashtags.extend(extended_potential_hashtags)
 
-        #retweet
-        if "retweeted_status" in tweet:
+        #retweet with no extended_tweet field
+        if "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
+            if len(retweeted_potential_hashtags) > 0:
+                hashtags.extend(retweeted_potential_hashtags)
+       
+        #retweet with extended_tweet field
+        if ("retweeted_status" in tweet) and (tweet["retweeted_status"]["truncated"]):
+            retweeted_potential_hashtags = tweet["retweeted_status"]["extended_tweet"]["entities"]["hashtags"]
             if len(retweeted_potential_hashtags) > 0:
                 hashtags.extend(retweeted_potential_hashtags)
 

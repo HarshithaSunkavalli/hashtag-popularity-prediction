@@ -10,3 +10,7 @@ class DbHandler:
         tweets = self.db["tweets"].find({}) #use curly brackets to bypass default return limit
         return tweets
 
+    def getTweet(self, id):
+        tweet = self.db["tweets"].find_one({"id_str": id})
+        return tweet
+
