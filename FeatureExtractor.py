@@ -3,7 +3,8 @@ import DbHandler
 
 class FeatureExtractor:
 
-    __THRESHOLD = 0.4
+    __COOCCURANCE_THRESHOLD = 0.4
+    __LOCATION_THRESHOLD = 0.25
     """attributes: 
         self.tweets
         self.tweet_hashtag_map
@@ -41,8 +42,11 @@ class FeatureExtractor:
         """
             finds the location of each hashtag inside the corresponding tweet text
             returns a dictionary of (hashtag, 0/1/2) attributes.
-            0->prefix, 1->infix, 2->postfix
+            0->prefix, 1->infix, 2->postfix . The ckassification threshold is 0.25 of the total appearances
         """
+        prefix_counter = {}
+        infix_counter = {}
+        postfix_counter = {}
         for tweet_hashtag in self.tweet_hashtag_map.items():
             tweet_id = tweet_hashtag[0]
             tweet = self.dbHandler.getTweet(tweet_id)
@@ -54,8 +58,53 @@ class FeatureExtractor:
             elif "retweeted_status" in tweet and (tweet["retweeted_status"]["truncated"]):
                 text = tweet["retweeted_status"]["extended_tweet"]["full_text"]
             else:
-                text = tweet["text"]  
-            print(text)
+                text = tweet["text"]
+            text = str(text)
+           
+            hashtag_list = tweet_hashtag[1]
+
+            #initialize counters
+            for hashtag in hashtag_list:
+                prefix_counter[hashtag["text"]] = 0
+                infix_counter[hashtag["text"]] = 0
+                postfix_counter[hashtag["text"]] = 0
+
+            for hashtag in hashtag_list:
+                pattern = "#{}".format(hashtag["text"])
+
+                #prefix
+                if text.startswith(pattern):
+                    prefix_counter[hashtag["text"]] += 1
+                
+                #infix
+                if (not text.startswith(pattern)) and (not text.endswith(pattern)):#no need to check if hashtag exists in text as long as there is in tweet-hashtag map
+                    infix_counter[hashtag["text"]] += 1
+                
+                #postfix
+                if text.endswith(pattern):
+                    postfix_counter[hashtag["text"]] += 1
+
+                ##we do not check the case that tweet ends with more than 1 hashtags. The last one will be correctly classified as postfix but the others wrongly as infix .
+            
+        hashtag_location = {}
+        for hashtag in self.hashtags:
+            total_appearances = prefix_counter[hashtag["text"]] + infix_counter[hashtag["text"]] + postfix_counter[hashtag["text"]]
+                
+            prefix_ratio = float(prefix_counter[hashtag["text"]]) / total_appearances
+            infix_ratio = float(infix_counter[hashtag["text"]]) / total_appearances
+            postfix_ratio = float(postfix_counter[hashtag["text"]]) / total_appearances
+                
+            max_of_three = max(prefix_ratio, infix_ratio, postfix_ratio)
+
+            if prefix_ratio == max_of_three and prefix_ratio > self.__LOCATION_THRESHOLD:
+                hashtag_location[hashtag["text"]] = 0
+            elif infix_ratio == max_of_three and infix_ratio > self.__LOCATION_THRESHOLD:
+                hashtag_location[hashtag["text"]] = 1
+            else:
+                hashtag_location[hashtag["text"]] = 2
+            
+        return hashtag_location
+
 
     def __get_hashtags_cooccurance(self):
         """
@@ -88,7 +137,7 @@ class FeatureExtractor:
             ratio_hashtag_cooccurance[hashtag] = hashtag_cooccurance[hashtag] / float(value)
 
         for hashtag,value in ratio_hashtag_cooccurance.items():
-            ratio_hashtag_cooccurance[hashtag] = True if ratio_hashtag_cooccurance[hashtag] >= self.__THRESHOLD else False
+            ratio_hashtag_cooccurance[hashtag] = True if ratio_hashtag_cooccurance[hashtag] >= self.__COOCCURANCE_THRESHOLD else False
             
         return ratio_hashtag_cooccurance
             
