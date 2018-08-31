@@ -112,29 +112,26 @@ class FeatureExtractor:
             True is given if more than 40% of the specific hashtag occurences are collocated with other hashtags
         """
 
-        hashtag_appearance = {}
-        hashtag_cooccurance = {}  
+        appearance_counter = {}
+        cooccurance_counter = {} 
+        
+        #initialize counters
+        for hashtag in self.hashtags:
+            appearance_counter[hashtag["text"]] = 0
+            cooccurance_counter[hashtag["text"]] = 0
 
         for hashtag_list in self.tweet_hashtag_map.values():
             if len(hashtag_list) == 1: #no coexisting hashtags in this list
-                if not hashtag_list[0]["text"] in hashtag_appearance:
-                    hashtag_appearance[hashtag_list[0]["text"]] = 1
-                    hashtag_cooccurance[hashtag_list[0]["text"]] = 0 #we are sure that it wont exist here either. We initialize it with value 0 as long as there is no coexistence
-                else:
-                    hashtag_appearance[hashtag_list[0]["text"]] += 1
+                appearance_counter[hashtag_list[0]["text"]] += 1
             else:#only coexisting hashtags in this list
                 for hashtag in hashtag_list:
-                    if not hashtag["text"] in hashtag_appearance:
-                        hashtag_appearance[hashtag["text"]] = 1
-                        hashtag_cooccurance[hashtag["text"]] = 1 #we are sure that it wont exist here either
-                    else:
-                        hashtag_appearance[hashtag["text"]] += 1
-                        hashtag_cooccurance[hashtag["text"]] += 1
+                    appearance_counter[hashtag["text"]] += 1
+                    cooccurance_counter[hashtag["text"]] += 1
             
         ###calculate ratio so as to consider 40% threshold
         ratio_hashtag_cooccurance = {}
-        for hashtag, value in hashtag_appearance.items():
-            ratio_hashtag_cooccurance[hashtag] = hashtag_cooccurance[hashtag] / float(value)
+        for hashtag, value in appearance_counter.items():
+            ratio_hashtag_cooccurance[hashtag] = cooccurance_counter[hashtag] / float(value)
 
         for hashtag,value in ratio_hashtag_cooccurance.items():
             ratio_hashtag_cooccurance[hashtag] = True if ratio_hashtag_cooccurance[hashtag] >= self.__COOCCURANCE_THRESHOLD else False
