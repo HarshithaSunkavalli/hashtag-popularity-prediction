@@ -1,5 +1,6 @@
 import re
 import DbHandler
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 class FeatureExtractor:
 
@@ -35,14 +36,50 @@ class FeatureExtractor:
         hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
         #location feature
         hashtag_features["location"] = self.__get_hashtags_location()
-
+        
         return hashtag_features
+
+    def get_tweet_features(self):
+        """
+            returns the tweet related features
+        """
+        tweet_features = {}
+        #sentiment feature
+        tweet_features["sentiment"] = self.__get_tweets_sentiment()
+
+        return tweet_features
+    
+    def __get_tweets_sentiment(self):
+        """
+            returns a dictionary of (tweet_id, positive/neutral/negative) attributes.
+        """
+        analyzer = SentimentIntensityAnalyzer()
+        
+        tweet_sentiment = {}
+        for tweet in self.tweets:
+            tweet_sentiment[tweet["id_str"]] = ""
+
+        for tweet in self.tweets:
+            text = self.__get_tweet_text(tweet)
+            
+            vs = analyzer.polarity_scores(text)
+            sentiment = vs['compound']
+            
+            if sentiment >= 0.5:
+                tweet_sentiment[tweet["id_str"]] = "positive"
+            elif sentiment > -0.5 and sentiment < 0.5:
+                tweet_sentiment[tweet["id_str"]] = "neutral"
+            else:
+                tweet_sentiment[tweet["id_str"]] = "negative"
+        
+        return tweet_sentiment
 
     def __get_hashtags_location(self):
         """
             finds the location of each hashtag inside the corresponding tweet text
-            returns a dictionary of (hashtag, 0/1/2) attributes.
-            0->prefix, 1->infix, 2->postfix . The ckassification threshold is 0.25 of the total appearances
+            returns a dictionary of (hashtag, prefix/infix/postfix) attributes.
+            The ckassification threshold is 0.25 of the total appearances
+            !!!we do not check the case that tweet ends with more than 1 hashtags. The last one will be correctly classified as postfix but the others wrongly as infix!!!
         """
         prefix_counter = {}
         infix_counter = {}
@@ -50,16 +87,8 @@ class FeatureExtractor:
         for tweet_hashtag in self.tweet_hashtag_map.items():
             tweet_id = tweet_hashtag[0]
             tweet = self.dbHandler.getTweet(tweet_id)
-
-            if "extended_tweet" in tweet :
-                text = tweet["extended_tweet"]["full_text"]
-            elif "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
-                text = tweet["retweeted_status"]["text"]
-            elif "retweeted_status" in tweet and (tweet["retweeted_status"]["truncated"]):
-                text = tweet["retweeted_status"]["extended_tweet"]["full_text"]
-            else:
-                text = tweet["text"]
-            text = str(text)
+            
+            text = self.__get_tweet_text(tweet)
            
             hashtag_list = tweet_hashtag[1]
 
@@ -83,8 +112,6 @@ class FeatureExtractor:
                 #postfix
                 if text.endswith(pattern):
                     postfix_counter[hashtag["text"]] += 1
-
-                ##we do not check the case that tweet ends with more than 1 hashtags. The last one will be correctly classified as postfix but the others wrongly as infix .
             
         hashtag_location = {}
         for hashtag in self.hashtags:
@@ -97,14 +124,28 @@ class FeatureExtractor:
             max_of_three = max(prefix_ratio, infix_ratio, postfix_ratio)
 
             if prefix_ratio == max_of_three and prefix_ratio > self.__LOCATION_THRESHOLD:
-                hashtag_location[hashtag["text"]] = 0
+                hashtag_location[hashtag["text"]] = "prefix"
             elif infix_ratio == max_of_three and infix_ratio > self.__LOCATION_THRESHOLD:
-                hashtag_location[hashtag["text"]] = 1
+                hashtag_location[hashtag["text"]] = "infix"
             else:
-                hashtag_location[hashtag["text"]] = 2
+                hashtag_location[hashtag["text"]] = "postfix"
             
         return hashtag_location
 
+    def __get_tweet_text(self, tweet):
+        """
+            returns the text of the given tweet json
+        """
+        if "extended_tweet" in tweet :
+            text = tweet["extended_tweet"]["full_text"]
+        elif "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
+            text = tweet["retweeted_status"]["text"]
+        elif "retweeted_status" in tweet and (tweet["retweeted_status"]["truncated"]):
+            text = tweet["retweeted_status"]["extended_tweet"]["full_text"]
+        else:
+            text = tweet["text"]
+        
+        return str(text)
 
     def __get_hashtags_cooccurance(self):
         """

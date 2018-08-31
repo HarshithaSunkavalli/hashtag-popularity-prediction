@@ -7,5 +7,7 @@ tweets = db_handler.getTweets()
 feature_extractor = FeatureExtractor.FeatureExtractor(tweets, db_handler)
 
 hashtag_features = feature_extractor.get_hashtag_features()
+tweet_features = feature_extractor.get_tweet_features()
 
 print(hashtag_features)
+print(tweet_features)
