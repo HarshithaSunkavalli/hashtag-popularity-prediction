@@ -13,9 +13,9 @@ class FeatureExtractor:
         self.dbHandler
     """
 
-    def __init__(self, tweets, dbHandler):
-        self.tweets = list(tweets)
+    def __init__(self, dbHandler):
         self.dbHandler = dbHandler
+        self.tweets = list(self.dbHandler.getTweets())
 
     def get_hashtag_features(self):
         """
@@ -71,8 +71,6 @@ class FeatureExtractor:
             tweet_ratio[hashtag["text"]] = tweet_count[hashtag["text"]] / len(self.tweets)
         
         return tweet_ratio
-
-        
 
     def __get_tweets_sentiment(self):
         """
