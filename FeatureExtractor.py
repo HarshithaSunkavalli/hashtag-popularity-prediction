@@ -48,9 +48,44 @@ class FeatureExtractor:
         tweet_features["sentiment"] = self.__get_tweets_sentiment()
         #ratio features
         tweet_features["tweet_ratio"] = self.__get_tweet_ratio()
-
+        tweet_features["author_ratio"] = self.__get_author_ratio()
         return tweet_features
-    
+
+    def __get_author_ratio(self):
+        """
+            returns a dictionary of (hashtag, author ratio) attributes presenting the ratio of authors who used the specific hashtag
+        """   
+        authors = []
+        author_track = {}
+        #initialize dictionary
+        for hashtag in self.hashtags:
+            author_track[hashtag["text"]] = []
+        
+        #count authors
+        for tweetId, hashtag_list in self.tweet_hashtag_map.items():
+            authorId = self.__getAuthor(tweetId)
+            for hashtag in hashtag_list:
+                if authorId not in author_track[hashtag["text"]]:
+                    author_track[hashtag["text"]].append(authorId)
+                
+                #count distinct authors
+                if authorId not in authors:
+                    authors.append(authorId)
+
+        #map (hashtag, list of authors) to (hashtag, author count)
+        author_track = {hashtag: len(author_list) for hashtag, author_list in author_track.items()}
+        
+        #extract actual ratio
+        author_ratio = {hashtag: appearances/ len(authors) for hashtag, appearances in author_track.items()}
+
+        return author_ratio
+
+    def __getAuthor(self, tweetId):
+        """
+            returns the author of the specific tweet
+        """
+        return self.dbHandler.getTweetById(tweetId)["user"]["id_str"]
+
     def __get_tweet_ratio(self):
         """
             returns a dictionary of (hashtag, tweet ratio) attributes presenting the ratio of tweets containing the specific hashtag
@@ -67,8 +102,7 @@ class FeatureExtractor:
         
         tweet_ratio = {}
         #extract actual ratio
-        for hashtag in self.hashtags:
-            tweet_ratio[hashtag["text"]] = tweet_count[hashtag["text"]] / len(self.tweets)
+        tweet_ratio = {hashtag: appearances/ len(self.tweets) for hashtag, appearances in tweet_count.items()}
         
         return tweet_ratio
 
