@@ -2,7 +2,7 @@ import DbHandler
 import FeatureExtractor
 
 db_handler = DbHandler.DbHandler()
-tweets = db_handler.getTweets()
+tweets = db_handler.tweets
 
 feature_extractor = FeatureExtractor.FeatureExtractor(tweets, db_handler)
 

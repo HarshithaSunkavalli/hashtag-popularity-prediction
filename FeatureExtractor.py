@@ -46,9 +46,34 @@ class FeatureExtractor:
         tweet_features = {}
         #sentiment feature
         tweet_features["sentiment"] = self.__get_tweets_sentiment()
+        #ratio features
+        tweet_features["tweet_ratio"] = self.__get_tweet_ratio()
 
         return tweet_features
     
+    def __get_tweet_ratio(self):
+        """
+            returns a dictionary of (hashtag, tweet ratio) attributes presenting the ratio of tweets containing the specific hashtag
+        """
+        tweet_count = {}
+        #initialize dictionary
+        for hashtag in self.hashtags:
+            tweet_count[hashtag["text"]] = 0
+
+        #count appearances
+        for _, hashtag_list in self.tweet_hashtag_map.items():
+            for hashtag in hashtag_list:
+                tweet_count[hashtag["text"]] += 1
+        
+        tweet_ratio = {}
+        #extract actual ratio
+        for hashtag in self.hashtags:
+            tweet_ratio[hashtag["text"]] = tweet_count[hashtag["text"]] / len(self.tweets)
+        
+        return tweet_ratio
+
+        
+
     def __get_tweets_sentiment(self):
         """
             returns a dictionary of (tweet_id, positive/neutral/negative) attributes.
@@ -86,7 +111,7 @@ class FeatureExtractor:
         postfix_counter = {}
         for tweet_hashtag in self.tweet_hashtag_map.items():
             tweet_id = tweet_hashtag[0]
-            tweet = self.dbHandler.getTweet(tweet_id)
+            tweet = self.dbHandler.getTweetById(tweet_id)
             
             text = self.__get_tweet_text(tweet)
            
@@ -249,7 +274,7 @@ class FeatureExtractor:
             Private method used to extract hashtags from the given tweets.
             self.tweet_hashtag_map: {'994633657141813248': [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}], '54691802283900928': [{'text': 'PGP', 'indices': [130, 134]}]}
             where key is the tweet id and value is a list of containing hashtags
-            self.hashtags: [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}]
+            self.hashtags: [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}] and hashtags exist only once.
         """
 
         tweet_hashtag_map = {}
@@ -259,7 +284,8 @@ class FeatureExtractor:
         hashtags = []
         for hashtag_list in tweet_hashtag_map.values():
             for hashtag in hashtag_list:
-                hashtags.append(hashtag)
+                if hashtag not in hashtags:
+                    hashtags.append(hashtag)
         
         self.tweet_hashtag_map = tweet_hashtag_map
         self.hashtags = hashtags
