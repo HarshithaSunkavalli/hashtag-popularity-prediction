@@ -106,19 +106,19 @@ class FeatureExtractor:
             returns a dictionary of (hashtag, mention ratio) attributes presenting the ratio of tweets which contain the specific hashtag as well as at least one mention
         """
         total_mentions = 0
-        mentions_count = {}
+        mention_count = {}
         for hashtag in self.hashtags:
-            mentions_count[hashtag["text"]] = 0
+            mention_count[hashtag["text"]] = 0
 
         for tweetId, hashtag_list in self.tweet_hashtag_map.items():
             for hashtag in hashtag_list:
                 if self.__contains_mentions(tweetId):
-                    mentions_count[hashtag["text"]] += 1
+                    mention_count[hashtag["text"]] += 1
                     total_mentions += 1
       
-        mentions_ratio = {hashtag: mentions_contained_in / total_mentions for hashtag, mentions_contained_in in mentions_count.items()}
+        mention_ratio = {hashtag: mentions_contained_in / total_mentions for hashtag, mentions_contained_in in mention_count.items()} if total_mentions > 0 else {hashtag: 0.0 for hashtag in mention_count.keys()}
 
-        return mentions_ratio
+        return mention_ratio
 
     def __contains_mentions(self, tweetId):
         """
@@ -163,7 +163,7 @@ class FeatureExtractor:
                     retweet_count[hashtag["text"]] += 1
                     total_retweets += 1
         
-        retweet_ratio = {hashtag: times_retweeted / total_retweets for hashtag, times_retweeted in retweet_count.items()}
+        retweet_ratio = {hashtag: times_retweeted / total_retweets for hashtag, times_retweeted in retweet_count.items()} if total_retweets > 0 else {hashtag: 0.0 for hashtag in retweet_count.keys()}
 
         return retweet_ratio
 
@@ -196,10 +196,10 @@ class FeatureExtractor:
                     authors.append(authorId)
 
         #map (hashtag, list of authors) to (hashtag, author count)
-        author_track = {hashtag: len(author_list) for hashtag, author_list in author_track.items()}
+        author_count = {hashtag: len(author_list) for hashtag, author_list in author_track.items()}
         
         #extract actual ratio
-        author_ratio = {hashtag: appearances/ len(authors) for hashtag, appearances in author_track.items()}
+        author_ratio = {hashtag: appearances/ len(authors) for hashtag, appearances in author_count.items()} if len(authors) > 0 else {hashtag: 0.0 for hashtag in author_count.keys()}
 
         return author_ratio
 
@@ -225,7 +225,7 @@ class FeatureExtractor:
         
         tweet_ratio = {}
         #extract actual ratio
-        tweet_ratio = {hashtag: appearances/ len(self.tweets) for hashtag, appearances in tweet_count.items()}
+        tweet_ratio = {hashtag: appearances/ len(self.tweets) for hashtag, appearances in tweet_count.items()} if len(self.tweets) > 0 else {hashtag: 0.0 for hashtag in tweet_count.keys()}
         
         return tweet_ratio
 
