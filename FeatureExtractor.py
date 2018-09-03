@@ -50,17 +50,52 @@ class FeatureExtractor:
         tweet_features["tweet_ratio"] = self.__get_tweet_ratio()
         tweet_features["author_ratio"] = self.__get_author_ratio()
         tweet_features["retweet_ratio"] = self.__get_retweet_ratio()
+        tweet_features["mention_ratio"] = self.__get_mention_ratio()
         
         return tweet_features
 
+    def __get_mention_ratio(self):
+        """
+            returns a dictionary of (hashtag, mention ratio) attributes presenting the ratio of tweets which contain the specific hashtag as well as at least one mention
+        """
+        total_mentions = 0
+        mentions_count = {}
+        for hashtag in self.hashtags:
+            mentions_count[hashtag["text"]] = 0
+
+        for tweetId, hashtag_list in self.tweet_hashtag_map.items():
+            for hashtag in hashtag_list:
+                if self.__contains_mentions(tweetId):
+                    mentions_count[hashtag["text"]] += 1
+                    total_mentions += 1
+      
+        mentions_ratio = {hashtag: mentions_contained_in / total_mentions for hashtag, mentions_contained_in in mentions_count.items()}
+
+        return mentions_ratio
+
+    def __contains_mentions(self, tweetId):
+        """
+            returns true if tweet json contains at least one mention
+            user_mentions indicate the existence of mentions. But no mentions mean either no user_mentions attribute or user_mentions of length 0
+        """
+        tweet = self.dbHandler.getTweetById(tweetId)
+
+        if not tweet["truncated"]:
+            return ("user_mentions" in tweet["entities"]) and (len(tweet["entities"]["user_mentions"]) > 0)
+        elif tweet["truncated"] and "retweeted_status" not in tweet: #because retweets can be truncated without containing an extended field
+            return ("user_mentions" in tweet["extended_tweet"]["entities"])  and (len(tweet["extended_tweet"]["entities"]["user_mentions"]) > 0)
+        elif tweet["truncated"] and "retweeted_status" in tweet: #we care only for the retweet and not for the original tweet
+            return ("user_mentions" in tweet["entities"]) and (len(tweet["entities"]["user_mentions"]) > 0)
+        else:
+            return False
+
     def __get_retweet_ratio(self):
         """
-            returns a dictionary of (hashtag, retweet ratio) attributes presenting the ratio of authors who used the specific hashtag
+            returns a dictionary of (hashtag, retweet ratio) attributes presenting the ratio of retweets which contain the specific hashtag
         """
 
         total_retweets = 0
         retweet_count = {}
-        #initialize dictionary
         for hashtag in self.hashtags:
             retweet_count[hashtag["text"]] = 0
         
