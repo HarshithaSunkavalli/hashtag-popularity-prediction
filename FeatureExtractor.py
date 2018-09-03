@@ -200,7 +200,7 @@ class FeatureExtractor:
         """
             finds the location of each hashtag inside the corresponding tweet text
             returns a dictionary of (hashtag, prefix/infix/postfix) attributes.
-            The ckassification threshold is 0.25 of the total appearances
+            The classification threshold is 0.25 of the total appearances
             !!!we do not check the case that tweet ends with more than 1 hashtags. The last one will be correctly classified as postfix but the others wrongly as infix!!!
         """
         prefix_counter = {}
@@ -393,16 +393,17 @@ class FeatureExtractor:
         """
         hashtags = []
         #simple tweet
-        first_level_potential_hashtags = tweet["entities"]["hashtags"]
-        if len(first_level_potential_hashtags) > 0:
-            hashtags.extend(first_level_potential_hashtags)
+        if not tweet["truncated"]:
+            first_level_potential_hashtags = tweet["entities"]["hashtags"]
+            if len(first_level_potential_hashtags) > 0:
+                hashtags.extend(first_level_potential_hashtags)
 
         #extended_tweet
-        if "extended_tweet" in tweet:
+        if tweet["truncated"] and "retweeted_status" not in tweet:
             extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
             if len(extended_potential_hashtags) > 0:
                 hashtags.extend(extended_potential_hashtags)
-
+        
         #retweet with no extended_tweet field
         if "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
