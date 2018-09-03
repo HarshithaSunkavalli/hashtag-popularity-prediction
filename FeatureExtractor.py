@@ -107,30 +107,30 @@ class FeatureExtractor:
         tweet = self.dbHandler.getTweetById(tweetId)
         return self.__contains_entities_element(tweet, "user_mentions")
 
-        def __contains_entities_element(self, tweet, element):
-            """
-                returns true if tweet json contains at least one of the given element
-                element attribute indicate the existence of the specific element such as urls. But no element mean either no element attribute or element attribute of length 0
-            """
-            if not tweet["truncated"]:
-                return (element in tweet["entities"]) and (tweet["entities"][element])#not empty
-            elif (tweet["truncated"]) and ("extended_tweet" in tweet): #because there can be truncated retweets without containing an extended_tweet field
-                return (element in tweet["extended_tweet"]["entities"])  and (tweet["extended_tweet"]["entities"][element])
-            elif "retweeted_status" in tweet: 
-                if tweet["retweeted_status"]["truncated"]:
-                    #we care both for the retweet and the original tweet (which is truncated)
-                    return (
-                            ((element in tweet["entities"]) and (tweet["entities"][element])) or 
-                            ((element in tweet["retweeted_status"]["extended_tweet"]["entities"]) and (tweet["retweeted_status"]["extended_tweet"]["entities"][element]))
-                        )
-                else:
-                    #original tweet is not truncated
-                    return (
-                            ((element in tweet["entities"]) and (tweet["entities"][element])) or 
-                            ((element in tweet["retweeted_status"]["entities"]) and (tweet["retweeted_status"]["entities"][element]))
-                        )
+    def __contains_entities_element(self, tweet, element):
+        """
+            returns true if tweet json contains at least one of the given element
+            element attribute indicate the existence of the specific element such as urls. But no element mean either no element attribute or element attribute of length 0
+        """
+        if not tweet["truncated"]:
+            return (element in tweet["entities"]) and (tweet["entities"][element])#not empty
+        elif (tweet["truncated"]) and ("extended_tweet" in tweet): #because there can be truncated retweets without containing an extended_tweet field
+            return (element in tweet["extended_tweet"]["entities"])  and (tweet["extended_tweet"]["entities"][element])
+        elif "retweeted_status" in tweet: 
+            if tweet["retweeted_status"]["truncated"]:
+                #we care both for the retweet and the original tweet (which is truncated)
+                return (
+                        ((element in tweet["entities"]) and (tweet["entities"][element])) or 
+                        ((element in tweet["retweeted_status"]["extended_tweet"]["entities"]) and (tweet["retweeted_status"]["extended_tweet"]["entities"][element]))
+                    )
             else:
-                return False
+                #original tweet is not truncated
+                return (
+                        ((element in tweet["entities"]) and (tweet["entities"][element])) or 
+                        ((element in tweet["retweeted_status"]["entities"]) and (tweet["retweeted_status"]["entities"][element]))
+                    )
+        else:
+            return False
 
     def __get_retweet_ratio(self):
         """
