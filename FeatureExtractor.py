@@ -81,11 +81,22 @@ class FeatureExtractor:
         tweet = self.dbHandler.getTweetById(tweetId)
 
         if not tweet["truncated"]:
-            return ("user_mentions" in tweet["entities"]) and (len(tweet["entities"]["user_mentions"]) > 0)
-        elif tweet["truncated"] and "retweeted_status" not in tweet: #because retweets can be truncated without containing an extended field
-            return ("user_mentions" in tweet["extended_tweet"]["entities"])  and (len(tweet["extended_tweet"]["entities"]["user_mentions"]) > 0)
-        elif tweet["truncated"] and "retweeted_status" in tweet: #we care only for the retweet and not for the original tweet
-            return ("user_mentions" in tweet["entities"]) and (len(tweet["entities"]["user_mentions"]) > 0)
+            return ("user_mentions" in tweet["entities"]) and (tweet["entities"]["user_mentions"])#not empty
+        elif (tweet["truncated"]) and ("extended_tweet" in tweet): #because there can be truncated retweets without containing an extended_tweet field
+            return ("user_mentions" in tweet["extended_tweet"]["entities"])  and (tweet["extended_tweet"]["entities"]["user_mentions"])
+        elif "retweeted_status" in tweet: 
+            if tweet["retweeted_status"]["truncated"]:
+                #we care both for the retweet and the original tweet (which is truncated)
+                return (
+                        (("user_mentions" in tweet["entities"]) and (tweet["entities"]["user_mentions"])) or 
+                        (("user_mentions" in tweet["retweeted_status"]["extended_tweet"]["entities"]) and (tweet["retweeted_status"]["extended_tweet"]["entities"]["user_mentions"]))
+                    )
+            else:
+                #original tweet is not truncated
+                return (
+                        (("user_mentions" in tweet["entities"]) and (tweet["entities"]["user_mentions"])) or 
+                        (("user_mentions" in tweet["retweeted_status"]["entities"]) and (tweet["retweeted_status"]["entities"]["user_mentions"]))
+                    )
         else:
             return False
 
