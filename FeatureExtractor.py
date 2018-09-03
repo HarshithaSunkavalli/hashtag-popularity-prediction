@@ -51,8 +51,55 @@ class FeatureExtractor:
         tweet_features["author_ratio"] = self.__get_author_ratio()
         tweet_features["retweet_ratio"] = self.__get_retweet_ratio()
         tweet_features["mention_ratio"] = self.__get_mention_ratio()
+        tweet_features["url_ratio"] = self.__get_url_ratio()
         
         return tweet_features
+
+    def __get_url_ratio(self):
+        """
+            returns a dictionary of (hashtag, url ratio) attributes presenting the ratio of tweets which contain the specific hashtag as well as at least one url
+        """
+        total_urls = 0
+        url_count = {}
+        for hashtag in self.hashtags:
+            url_count[hashtag["text"]] = 0
+
+        for tweetId, hashtag_list in self.tweet_hashtag_map.items():
+            for hashtag in hashtag_list:
+                if self.__contains_urls(tweetId):
+                    url_count[hashtag["text"]] += 1
+                    total_urls += 1
+
+        url_ratio = {hashtag: urls_contained_in / total_urls for hashtag, urls_contained_in in url_count.items()} if total_urls > 0 else {hashtag: 0.0 for hashtag in url_count.keys()}
+
+        return url_ratio
+
+    def __contains_urls(self, tweetId):
+        """
+            returns true if tweet json contains at least one url
+            urls attribute indicate the existence of urls. But no urls mean either no urls attribute or urls of length 0
+        """
+        tweet = self.dbHandler.getTweetById(tweetId)
+
+        if not tweet["truncated"]:
+            return ("urls" in tweet["entities"]) and (tweet["entities"]["urls"])#not empty
+        elif (tweet["truncated"]) and ("extended_tweet" in tweet): #because there can be truncated retweets without containing an extended_tweet field
+            return ("urls" in tweet["extended_tweet"]["entities"])  and (tweet["extended_tweet"]["entities"]["urls"])
+        elif "retweeted_status" in tweet: 
+            if tweet["retweeted_status"]["truncated"]:
+                #we care both for the retweet and the original tweet (which is truncated)
+                return (
+                        (("urls" in tweet["entities"]) and (tweet["entities"]["urls"])) or 
+                        (("urls" in tweet["retweeted_status"]["extended_tweet"]["entities"]) and (tweet["retweeted_status"]["extended_tweet"]["entities"]["urls"]))
+                    )
+            else:
+                #original tweet is not truncated
+                return (
+                        (("urls" in tweet["entities"]) and (tweet["entities"]["urls"])) or 
+                        (("urls" in tweet["retweeted_status"]["entities"]) and (tweet["retweeted_status"]["entities"]["urls"]))
+                    )
+        else:
+            return False
 
     def __get_mention_ratio(self):
         """
