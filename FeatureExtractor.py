@@ -406,25 +406,25 @@ class FeatureExtractor:
         #simple tweet
         if not tweet["truncated"]:
             first_level_potential_hashtags = tweet["entities"]["hashtags"]
-            if len(first_level_potential_hashtags) > 0:
+            if first_level_potential_hashtags:
                 hashtags.extend(first_level_potential_hashtags)
 
         #extended_tweet
         if tweet["truncated"] and "retweeted_status" not in tweet:
             extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
-            if len(extended_potential_hashtags) > 0:
+            if extended_potential_hashtags:
                 hashtags.extend(extended_potential_hashtags)
         
         #retweet with no extended_tweet field
         if "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
-            if len(retweeted_potential_hashtags) > 0:
+            if retweeted_potential_hashtags:
                 hashtags.extend(retweeted_potential_hashtags)
        
         #retweet with extended_tweet field
         if ("retweeted_status" in tweet) and (tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["extended_tweet"]["entities"]["hashtags"]
-            if len(retweeted_potential_hashtags) > 0:
+            if retweeted_potential_hashtags:
                 hashtags.extend(retweeted_potential_hashtags)
 
         tweet_hashtag_map[tweet["id_str"]] = hashtags
