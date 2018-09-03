@@ -49,7 +49,37 @@ class FeatureExtractor:
         #ratio features
         tweet_features["tweet_ratio"] = self.__get_tweet_ratio()
         tweet_features["author_ratio"] = self.__get_author_ratio()
+        tweet_features["retweet_ratio"] = self.__get_retweet_ratio()
+        
         return tweet_features
+
+    def __get_retweet_ratio(self):
+        """
+            returns a dictionary of (hashtag, retweet ratio) attributes presenting the ratio of authors who used the specific hashtag
+        """
+
+        total_retweets = 0
+        retweet_count = {}
+        #initialize dictionary
+        for hashtag in self.hashtags:
+            retweet_count[hashtag["text"]] = 0
+        
+        for tweetId, hashtag_list in self.tweet_hashtag_map.items():
+            for hashtag in hashtag_list:
+                if self.__is_retweet(tweetId):
+                    retweet_count[hashtag["text"]] += 1
+                    total_retweets += 1
+        
+        retweet_ratio = {hashtag: times_retweeted / total_retweets for hashtag, times_retweeted in retweet_count.items()}
+
+        return retweet_ratio
+
+    def __is_retweet(self, tweetId):
+        """
+            returns true if tweet json contains retweeted status field which means that this is a retweet
+        """
+        tweet = self.dbHandler.getTweetById(tweetId)
+        return "retweeted_status" in tweet 
 
     def __get_author_ratio(self):
         """
