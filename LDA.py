@@ -18,25 +18,59 @@ class LDA:
 
     def __init__(self, data):
          
-        labels = ["text", "index"]
-        data = pd.DataFrame.from_records(data, columns=labels)
-        data_text = data[["text"]]
-        data_text["index"] = data_text.index
-        self.__documents = data_text
+        labels = ["text", "id"]
+        self.__documents = pd.DataFrame.from_records(data, columns=labels)
         self.__stemmer = SnowballStemmer('english')
         self.__processed_docs = self.__documents["text"].map(self.__preprocess)
         self.__bow_corpus = self.__filter_out_words()
-        self.lda_with_bag_of_words()
 
-    def lda_with_bag_of_words(self):
+        self.__lda_bag_model = self.__lda_with_bag_of_words()
+        self.__lda_tf_model = self.__lda_with_tf_idf()
+
+    def predict_with_bag(self, tweetText):
         """
-            lda using bag of words
+            predict the topic of a tweet using lda bag of words model
+        """
+        bow_vector = self.__dictionary.doc2bow(self.__preprocess(tweetText))
+        prediction = sorted(self.__lda_bag_model[bow_vector], key=lambda tup: -1 * tup[1])
+
+        index, score = prediction[0]
+
+        return self.__lda_bag_model.print_topic(index, 5)
+
+    def predict_with_tf_idf(self, tweetText):
+        """
+            predict the topic of a tweet using lda tf idf model
+        """
+        bow_vector = self.__dictionary.doc2bow(self.__preprocess(tweetText))
+        prediction = sorted(self.__lda_tf_model[bow_vector], key=lambda tup: -1 * tup[1])
+
+        index, score = prediction[0]
+
+        return self.__lda_tf_model.print_topic(index, 5)
+
+    def __lda_with_bag_of_words(self):
+        """
+            lda model using bag of words
         """
 
-        lda_model = models.LdaMulticore(self.__bow_corpus, num_topics=20, id2word=self.__dictionary, passes=2, workers=2)
+        lda_model = models.LdaMulticore(self.__bow_corpus, num_topics=20, id2word=self.__dictionary, passes=2,
+                                        workers=2)
 
-        #for idx, topic in lda_model.print_topics(-1):
-            #print('Words: {}'.format(topic))
+        return lda_model
+
+    def __lda_with_tf_idf(self):
+        """
+            lda model using tf_idf
+        """
+        tfidf = models.TfidfModel(self.__bow_corpus)
+        corpus_tfidf = tfidf[self.__bow_corpus]
+
+        lda_model_tfidf = gensim.models.LdaMulticore(corpus_tfidf, num_topics=20, id2word=self.__dictionary, passes=2,
+                                                     workers=4)
+
+        return lda_model_tfidf
+
 
     def __filter_out_words(self):
         """

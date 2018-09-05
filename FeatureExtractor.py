@@ -66,15 +66,18 @@ class FeatureExtractor:
         """
             returns a dictionary of (tweetId: [(topic:probability),...]) attributes using Latent Dirichlet Allocation
         """
+        tweet_topic = {}
         tweet_data = []
-        index = 0
         for tweet in self.tweets:
+            tweet_topic[tweet["id_str"]] = ""
+
             text = self.__get_tweet_text(tweet)
-            tweet_data.append((text, index))
-            index += 1
+            tweet_data.append((text, tweet["id_str"]))
         
         lda = LDA.LDA(tweet_data)
-    
+
+
+
     def __get_hashtag_sentiment(self):
         """
             Returns a dictionary of (hashtag, positive/neutral/negative) attributes.
