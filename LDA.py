@@ -1,15 +1,18 @@
-import pandas as pd
-import re
-import gensim
+import warnings
+warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
+
 from gensim import corpora, models
 from gensim.utils import simple_preprocess
 from gensim.parsing.preprocessing import STOPWORDS
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.stem.porter import *
+import pandas as pd
 import numpy as np
-np.random.seed(2018)
 import nltk
+
+np.random.seed(2018)
 nltk.download('wordnet')
+
 
 class LDA:
 
@@ -67,7 +70,7 @@ class LDA:
         tfidf = models.TfidfModel(self.__bow_corpus)
         corpus_tfidf = tfidf[self.__bow_corpus]
 
-        lda_model_tfidf = gensim.models.LdaMulticore(corpus_tfidf, num_topics=20, id2word=self.__dictionary, passes=2,
+        lda_model_tfidf = models.LdaMulticore(corpus_tfidf, num_topics=20, id2word=self.__dictionary, passes=2,
                                                      workers=4)
 
         return lda_model_tfidf
@@ -79,7 +82,7 @@ class LDA:
             more than __MINIMUM_DOCUMENT_APPEARANCES,
             less than __MAXIMUM_DOCUMENT_APPEARANCE_FRACTION
         """
-        self.__dictionary = gensim.corpora.Dictionary(self.__processed_docs)
+        self.__dictionary = corpora.Dictionary(self.__processed_docs)
         self.__dictionary.filter_extremes(no_below=self.__MINIMUM_DOCUMENT_APPEARANCES, no_above=self.__MAXIMUM_DOCUMENT_APPEARANCE_FRACTION, keep_n=self.__TOKENS_TO_KEEP)
         bow_corpus = [self.__dictionary.doc2bow(document) for document in self.__processed_docs]  # contains (word_id,times_appeard) tuples
         return bow_corpus
