@@ -76,7 +76,11 @@ class FeatureExtractor:
         
         lda = LDA.LDA(tweet_data)
 
-
+        for tweet in self.tweets:
+            text = self.__get_tweet_text(tweet)
+            tweet_topic[tweet["id_str"]] = lda.predict_with_bag(text)
+            #tweet_topic[tweet["id_str"]] = lda.predict_with_tf_idf(text)
+        return tweet_topic
 
     def __get_hashtag_sentiment(self):
         """
