@@ -9,5 +9,5 @@ if __name__ == '__main__':
     hashtag_features = feature_extractor.get_hashtag_features()
     tweet_features = feature_extractor.get_tweet_features()
 
-    #print(hashtag_features)
+    print(hashtag_features)
     print(tweet_features)

@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 import gensim
 from gensim import corpora, models
 from gensim.utils import simple_preprocess
@@ -85,6 +86,7 @@ class LDA:
 
     def __preprocess(self, text):
         """
+            Removes potential URLs
             Tokenizes given text into sentences and words. 
             Lowercase and punctuation removed.
             Words smaller than 3 characters removed.
@@ -93,6 +95,8 @@ class LDA:
             Stem words.
         """
         result = []
+
+        text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text)
         for token in simple_preprocess(text):
             if token not in STOPWORDS and len(token) > 3:
                 result.append(self.__lemmatize_stemming(token))
