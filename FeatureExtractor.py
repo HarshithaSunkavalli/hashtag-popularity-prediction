@@ -74,7 +74,6 @@ class FeatureExtractor:
             index += 1
         
         lda = LDA.LDA(tweet_data)
-        print(lda.get_docs())
     
     def __get_hashtag_sentiment(self):
         """
