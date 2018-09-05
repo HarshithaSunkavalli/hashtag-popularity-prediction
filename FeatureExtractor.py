@@ -1,6 +1,8 @@
 import re
 import DbHandler
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import itertools
+import operator
 
 class FeatureExtractor:
 
@@ -36,6 +38,8 @@ class FeatureExtractor:
         hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
         #location feature
         hashtag_features["location"] = self.__get_hashtags_location()
+        #hashtag sentiment feature
+        hashtag_features["hashtag_sentiment"] = self.__get_hashtag_sentiment()
         
         return hashtag_features
 
@@ -45,15 +49,55 @@ class FeatureExtractor:
         """
         tweet_features = {}
         #sentiment feature
-        tweet_features["sentiment"] = self.__get_tweets_sentiment()
+        tweet_features["tweet_sentiment"] = self.__get_tweets_sentiment()
         #ratio features
         tweet_features["tweet_ratio"] = self.__get_tweet_ratio()
         tweet_features["author_ratio"] = self.__get_author_ratio()
         tweet_features["retweet_ratio"] = self.__get_retweet_ratio()
         tweet_features["mention_ratio"] = self.__get_mention_ratio()
         tweet_features["url_ratio"] = self.__get_url_ratio()
-        
+
         return tweet_features
+    
+    def __get_hashtag_sentiment(self):
+        """
+            Returns a dictionary of (hashtag, positive/neutral/negative) attributes.
+            The sentiment is extracted as the majority of distinct tweet sentiments
+        """
+        hashtag_sentiment = {}
+        for hashtag in self.hashtags:
+            hashtag_sentiment[hashtag["text"]] = []
+
+        tweet_sentiment = self.__get_tweets_sentiment()
+        for tweetId, sentiment in tweet_sentiment.items():
+            hashtag_list = self.tweet_hashtag_map[tweetId] #get tweet specific hashtags
+            for hashtag in hashtag_list:
+                hashtag_sentiment[hashtag["text"]].append(sentiment)
+        
+        def __most_common(sentiment_list):
+            """
+                returns the most common element in a list
+            """
+            # get an iterable of (item, iterable) pairs
+            sorted_list = sorted((x, i) for i, x in enumerate(sentiment_list))
+            
+            groups = itertools.groupby(sorted_list, key=operator.itemgetter(0))
+            # auxiliary function to get "quality" for an item
+            def _auxfun(g):
+                item, iterable = g
+                count = 0
+                min_index = len(sentiment_list)
+                for _, where in iterable:
+                    count += 1
+                    min_index = min(min_index, where)
+                
+                return count, -min_index
+            # pick the highest-count/earliest item
+            return max(groups, key=_auxfun)[0]
+
+        hashtag_sentiment = {hashtag: __most_common(sentiment_list) for hashtag, sentiment_list in hashtag_sentiment.items()}
+        
+        return hashtag_sentiment
 
     def __get_url_ratio(self):
         """
