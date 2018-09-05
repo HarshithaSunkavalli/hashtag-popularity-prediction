@@ -1,5 +1,6 @@
 import re
 import DbHandler
+import LDA
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import itertools
 import operator
@@ -56,8 +57,24 @@ class FeatureExtractor:
         tweet_features["retweet_ratio"] = self.__get_retweet_ratio()
         tweet_features["mention_ratio"] = self.__get_mention_ratio()
         tweet_features["url_ratio"] = self.__get_url_ratio()
+        #topic feature
+        tweet_features["tweet_topic"] = self.__get_tweet_topic()
 
         return tweet_features
+    
+    def __get_tweet_topic(self):
+        """
+            returns a dictionary of (tweetId: [(topic:probability),...]) attributes using Latent Dirichlet Allocation
+        """
+        tweet_data = []
+        index = 0
+        for tweet in self.tweets:
+            text = self.__get_tweet_text(tweet)
+            tweet_data.append((text, index))
+            index += 1
+        
+        lda = LDA.LDA(tweet_data)
+        print(lda.get_docs())
     
     def __get_hashtag_sentiment(self):
         """
