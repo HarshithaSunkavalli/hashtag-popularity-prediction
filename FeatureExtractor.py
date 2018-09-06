@@ -4,6 +4,7 @@ import LDA
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import itertools
 import operator
+import numpy as np
 
 class FeatureExtractor:
 
@@ -309,60 +310,34 @@ class FeatureExtractor:
     def __get_hashtags_location(self):
         """
             finds the location of each hashtag inside the corresponding tweet text
-            returns a dictionary of (hashtag, prefix/infix/postfix) attributes.
-            The classification threshold is 0.25 of the total appearances
-            !!!we do not check the case that tweet ends with more than 1 hashtags. The last one will be correctly classified as postfix but the others wrongly as infix!!!
+            returns a dictionary of (hashtag, ratio) attributes.
+            The ratio is calculated as the mean of the distinct hashtag ratios of each tweet they appear in
         """
-        prefix_counter = {}
-        infix_counter = {}
-        postfix_counter = {}
+
+        hashtag_ratio = {}
+        for hashtag in self.hashtags:
+            hashtag_ratio[hashtag["text"]] = []
+
         for tweet_hashtag in self.tweet_hashtag_map.items():
             tweet_id = tweet_hashtag[0]
             tweet = self.dbHandler.getTweetById(tweet_id)
             
             text = self.__get_tweet_text(tweet)
-           
+            word_list = text.split()
+
+
             hashtag_list = tweet_hashtag[1]
-
-            #initialize counters
-            for hashtag in hashtag_list:
-                prefix_counter[hashtag["text"]] = 0
-                infix_counter[hashtag["text"]] = 0
-                postfix_counter[hashtag["text"]] = 0
-
             for hashtag in hashtag_list:
                 pattern = "#{}".format(hashtag["text"])
 
-                #prefix
-                if text.startswith(pattern):
-                    prefix_counter[hashtag["text"]] += 1
-                
-                #infix
-                if (not text.startswith(pattern)) and (not text.endswith(pattern)):#no need to check if hashtag exists in text as long as there is in tweet-hashtag map
-                    infix_counter[hashtag["text"]] += 1
-                
-                #postfix
-                if text.endswith(pattern):
-                    postfix_counter[hashtag["text"]] += 1
-            
-        hashtag_location = {}
-        for hashtag in self.hashtags:
-            total_appearances = prefix_counter[hashtag["text"]] + infix_counter[hashtag["text"]] + postfix_counter[hashtag["text"]]
-                
-            prefix_ratio = float(prefix_counter[hashtag["text"]]) / total_appearances
-            infix_ratio = float(infix_counter[hashtag["text"]]) / total_appearances
-            postfix_ratio = float(postfix_counter[hashtag["text"]]) / total_appearances
-                
-            max_of_three = max(prefix_ratio, infix_ratio, postfix_ratio)
+                position = word_list.index(pattern)
+                ratio = position / len(word_list)
+                hashtag_ratio[hashtag["text"]].append(ratio)
 
-            if prefix_ratio == max_of_three and prefix_ratio > self.__LOCATION_THRESHOLD:
-                hashtag_location[hashtag["text"]] = "prefix"
-            elif infix_ratio == max_of_three and infix_ratio > self.__LOCATION_THRESHOLD:
-                hashtag_location[hashtag["text"]] = "infix"
-            else:
-                hashtag_location[hashtag["text"]] = "postfix"
-            
-        return hashtag_location
+        hashtag_ratio = {hashtag: np.array(ratio_list).mean() for hashtag, ratio_list in hashtag_ratio.items()}
+
+        return hashtag_ratio
+
 
     def __get_tweet_text(self, tweet):
         """

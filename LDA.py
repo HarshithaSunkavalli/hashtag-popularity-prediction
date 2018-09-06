@@ -10,10 +10,6 @@ import pandas as pd
 import numpy as np
 import nltk
 
-np.random.seed(2018)
-nltk.download('wordnet')
-
-
 class LDA:
 
     __MINIMUM_DOCUMENT_APPEARANCES = 0
@@ -21,7 +17,8 @@ class LDA:
     __TOKENS_TO_KEEP = 100000
 
     def __init__(self, data):
-         
+        nltk.download('wordnet')
+        np.random.seed(2018)
         labels = ["text", "id"]
         self.__documents = pd.DataFrame.from_records(data, columns=labels)
         self.__stemmer = SnowballStemmer('english')
