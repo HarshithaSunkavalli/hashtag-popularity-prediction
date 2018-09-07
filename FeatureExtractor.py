@@ -60,9 +60,76 @@ class FeatureExtractor:
         tweet_features["url_ratio"] = self.__get_url_ratio()
         #topic feature
         tweet_features["tweet_topic"] = self.__get_tweet_topic()
+        #word divergence distribution feature
+        tweet_features["word_divergence_distribution"] = self.__get_word_divergence()
 
         return tweet_features
-    
+
+    def __get_word_divergence(self):
+        """
+            Returns a dictionary of (hashtag, clarity) attributes.
+            Clarity is computed as the Kullback-Leibler word divergence distribution
+        """
+
+        hashtag_clarity = {}
+        hashtag_text = {}
+        for hashtag in self.hashtags:
+            hashtag_clarity[hashtag["text"]] = 0
+            hashtag_text[hashtag["text"]] = ""
+
+        #create tweet text
+        tweet_text = ""
+        for tweet in self.tweets:
+            text = self.__get_tweet_text(tweet)
+            text = self.__get_sanitized_text(text)
+            text += " "
+            tweet_text += text
+        #create hashtag text
+        for tweetId, hashtag_list in self.tweet_hashtag_map.items():
+            text = self.__get_tweet_text(self.dbHandler.getTweetById(tweetId))
+            text = self.__get_sanitized_text(text)
+            text += " "
+            for hashtag in hashtag_list:
+                hashtag_text[hashtag["text"]] += text
+
+        #split text to words
+        tweet_text_list = tweet_text.split()
+        hashtag_text_list = {hashtag: text.split() for hashtag, text in hashtag_text.items()}
+
+        #calculate word frequencies
+        tweet_dict = self.__wordListToFreqDict(tweet_text_list)
+        tweet_keys_sorted = sorted(tweet_dict)
+        tweet_list = [tweet_dict[key] for key in tweet_keys_sorted]
+        tweet_list = [value / len(tweet_list) for value in tweet_list]
+
+        for hashtag, wordlist in hashtag_text_list.items():
+            word_dict = self.__wordListToFreqDict(wordlist)
+            #keep original length as long as it is going to change
+            length = len(word_dict.keys())
+
+            #populate word_dict so as to contain every word that tweet_dict contains
+            for word in tweet_keys_sorted:
+                if word not in word_dict.keys():
+                    word_dict.update({word: 0})
+
+            #words in word_list are in the same order as words in tweet_list
+            word_list = [word_dict[key] for key in tweet_keys_sorted]
+            word_list = [value / length for value in word_list]
+
+            hashtag_clarity[hashtag] = self.__KL(word_list,tweet_list)
+
+        return hashtag_clarity
+
+    def __KL(self, a, b):
+        a = np.asarray(a, dtype=np.float)
+        b = np.asarray(b, dtype=np.float)
+
+        return np.sum(np.where(a != 0, a * np.log(a / b), 0))
+
+    def __wordListToFreqDict(self, wordlist):
+        wordfreq = [wordlist.count(p) for p in wordlist]
+        return dict(zip(wordlist, wordfreq))
+
     def __get_tweet_topic(self):
         """
             returns a dictionary of (tweetId: [(topic:probability),...]) attributes using Latent Dirichlet Allocation
@@ -353,6 +420,14 @@ class FeatureExtractor:
             text = tweet["text"]
         
         return str(text)
+
+    def __get_sanitized_text(self, text):
+        """
+            Removes urls
+        """
+        text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text)
+
+        return  text
 
     def __get_hashtags_cooccurance(self):
         """
