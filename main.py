@@ -1,6 +1,7 @@
 import DbHandler
 from FeatureExtractors.HashtagFeatureExtractor import HashtagFeatureExtractor
 from FeatureExtractors.TweetFeatureExtractor import TweetFeatureExtractor
+from FeatureExtractors.IOHandler import IOHandler
 
 if __name__ == '__main__':
     db_handler = DbHandler.DbHandler()
@@ -13,3 +14,9 @@ if __name__ == '__main__':
 
     print(hashtag_features)
     print(tweet_features)
+
+    ioHandler = IOHandler()
+
+    data = [{"hashtag":"PGP", "Words": 1, "Caps": 1}, {"hashtag":"HelloThere", "Words": 2, "Caps": 0}]
+    labels = ["hashtag","Words","Caps"]
+    ioHandler.writeToCSV(labels, data)
