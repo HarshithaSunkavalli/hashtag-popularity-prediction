@@ -12,11 +12,11 @@ if __name__ == '__main__':
     hashtag_features = feature_extractor.get_hashtag_features()
     tweet_features = tweet_feature_extractor.get_tweet_features()
 
-    print(hashtag_features)
-    print(tweet_features)
+    #print(hashtag_features)
+    #print(tweet_features)
 
     ioHandler = IOHandler()
+    data = ioHandler.preprocessHashtagFeatures(hashtag_features)
 
-    data = [{"hashtag":"PGP", "Words": 1, "Caps": 1}, {"hashtag":"HelloThere", "Words": 2, "Caps": 0}]
-    labels = ["hashtag","Words","Caps"]
-    ioHandler.writeToCSV(labels, data)
+    print(data)
+    #ioHandler.writeToCSV(labels, data)
