@@ -1,5 +1,7 @@
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import re
+import itertools
+import operator
 
 class FeatureExtractor:
 
@@ -116,3 +118,26 @@ class FeatureExtractor:
         text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text)
 
         return text
+
+    def most_common(self, myList):
+        """
+            returns the most common element in a list
+        """
+        # get an iterable of (item, iterable) pairs
+        sorted_list = sorted((x, i) for i, x in enumerate(myList))
+
+        groups = itertools.groupby(sorted_list, key=operator.itemgetter(0))
+
+        # auxiliary function to get "quality" for an item
+        def _auxfun(g):
+            item, iterable = g
+            count = 0
+            min_index = len(myList)
+            for _, where in iterable:
+                count += 1
+                min_index = min(min_index, where)
+
+            return count, -min_index
+
+        # pick the highest-count/earliest item
+        return max(groups, key=_auxfun)[0]

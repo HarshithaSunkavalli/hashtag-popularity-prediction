@@ -1,7 +1,5 @@
 from .FeatureExtractor import FeatureExtractor
 import numpy as np
-import itertools
-import operator
 import re
 
 class HashtagFeatureExtractor(FeatureExtractor):
@@ -173,30 +171,7 @@ class HashtagFeatureExtractor(FeatureExtractor):
             for hashtag in hashtag_list:
                 hashtag_sentiment[hashtag["text"]].append(sentiment)
 
-        def __most_common(sentiment_list):
-            """
-                returns the most common element in a list
-            """
-            # get an iterable of (item, iterable) pairs
-            sorted_list = sorted((x, i) for i, x in enumerate(sentiment_list))
-
-            groups = itertools.groupby(sorted_list, key=operator.itemgetter(0))
-
-            # auxiliary function to get "quality" for an item
-            def _auxfun(g):
-                item, iterable = g
-                count = 0
-                min_index = len(sentiment_list)
-                for _, where in iterable:
-                    count += 1
-                    min_index = min(min_index, where)
-
-                return count, -min_index
-
-            # pick the highest-count/earliest item
-            return max(groups, key=_auxfun)[0]
-
-        hashtag_sentiment = {hashtag: __most_common(sentiment_list) for hashtag, sentiment_list in
+        hashtag_sentiment = {hashtag: self.most_common(sentiment_list) for hashtag, sentiment_list in
                              hashtag_sentiment.items()}
 
         return hashtag_sentiment
