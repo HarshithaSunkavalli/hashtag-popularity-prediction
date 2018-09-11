@@ -15,10 +15,7 @@ if __name__ == '__main__':
     features = hashtag_features
     features.update(tweet_features)
 
-    print(features)
-
     ioHandler = IOHandler()
-    data = ioHandler.preprocessHashtagFeatures(hashtag_features)
+    data, labels = ioHandler.preprocessHashtagFeatures(hashtag_features)
 
-    #print(data)
-    #ioHandler.writeToCSV(labels, data)
+    ioHandler.writeToCSV(labels, data)

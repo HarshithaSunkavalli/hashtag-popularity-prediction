@@ -26,7 +26,6 @@ class IOHandler:
         featureValue = []
         #labels length == hashtags length
         for i in range(len(hashtags)):
-            print(i)
             dictionary = {}
             dictionary["hashtag"] = hashtags[i] # first pair is the hashtag itself
             for index, feature in enumerate(values.keys()):
@@ -34,7 +33,7 @@ class IOHandler:
                 dictionary[feature] = feature_values[i] # for feature in position index take value for corresponding hashtag
             featureValue.append(dictionary)
 
-        return featureValue
+        return featureValue, labels
 
     def writeToCSV(self, labels, data):
         """
