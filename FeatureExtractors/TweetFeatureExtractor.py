@@ -21,7 +21,7 @@ class TweetFeatureExtractor(FeatureExtractor):
         tweet_features["mention_ratio"] = self.__get_mention_ratio()
         tweet_features["url_ratio"] = self.__get_url_ratio()
         #topic feature
-        tweet_features["tweet_topic"] = self.__get_tweet_topic()
+        tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
         tweet_features["word_divergence_distribution"] = self.__get_word_divergence()
 
@@ -202,9 +202,9 @@ class TweetFeatureExtractor(FeatureExtractor):
         wordfreq = [wordlist.count(p) for p in wordlist]
         return dict(zip(wordlist, wordfreq))
 
-    def __get_tweet_topic(self):
+    def __get_topic(self):
         """
-            returns a dictionary of (tweetId: [(topic:probability),...]) attributes using Latent Dirichlet Allocation
+            returns a dictionary of (hashtag: topic) attributes using Latent Dirichlet Allocation
         """
         tweet_topic = {}
         tweet_data = []
@@ -220,7 +220,19 @@ class TweetFeatureExtractor(FeatureExtractor):
             text = self.get_tweet_text(tweet)
             tweet_topic[tweet["id_str"]] = lda.predict_with_bag(text)
             # tweet_topic[tweet["id_str"]] = lda.predict_with_tf_idf(text)
-        return tweet_topic
+
+        hashtag_topic = {}
+        for hashtag in self.hashtags:
+            hashtag_topic[hashtag["text"]] = []
+
+        for tweet, hashtagList in self.tweet_hashtag_map.items():
+            for hashtag in hashtagList:
+                hashtag_topic[hashtag["text"]].append(tweet_topic[tweet])
+
+        #hashtag topic is the the topic of the majority of hashtag's tweets
+        hashtag_topic = {hashtag: self.most_common(l) for hashtag, l in
+                             hashtag_topic.items()}
+        return hashtag_topic
 
     def __get_hashtag_sentiment(self):
         """
