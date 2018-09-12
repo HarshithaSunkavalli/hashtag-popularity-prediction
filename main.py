@@ -22,4 +22,4 @@ if __name__ == '__main__':
     ioHandler.writeToCSV(labels, data)
 
     autoencoder = AutoEncoder()
-    autoencoder.run()
+    autoencoder.reduce_dimensions()
