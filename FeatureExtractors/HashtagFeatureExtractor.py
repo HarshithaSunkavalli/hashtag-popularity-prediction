@@ -62,8 +62,10 @@ class HashtagFeatureExtractor(FeatureExtractor):
 
     def __get_hashtags_cooccurance(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes.
+            returns a dictionary of (hashtag, 1/0) attributes.
             True is given if more than 40% of the specific hashtag occurences are collocated with other hashtags
+            1: true
+            0: false
         """
 
         appearance_counter = {}
@@ -88,61 +90,70 @@ class HashtagFeatureExtractor(FeatureExtractor):
             ratio_hashtag_cooccurance[hashtag] = cooccurance_counter[hashtag] / float(value)
 
         for hashtag, value in ratio_hashtag_cooccurance.items():
-            ratio_hashtag_cooccurance[hashtag] = True if ratio_hashtag_cooccurance[
-                                                             hashtag] >= self.__COOCCURANCE_THRESHOLD else False
+            ratio_hashtag_cooccurance[hashtag] = 1 if ratio_hashtag_cooccurance[hashtag] >= self.__COOCCURANCE_THRESHOLD else 0
 
         return ratio_hashtag_cooccurance
 
     def __get_hashtags_special_signals(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes whether they contain special signals, such as gooood or !!!!, or not.
+            returns a dictionary of (hashtag, 1/0) attributes whether they contain special signals, such as gooood or !!!!, or not.
             3 or more consecutive letters or symbols required
+            1: true
+            0: false
         """
 
         special_signals = {}
         for hashtag in self.hashtags:
             temp_list = re.findall(r'((\w)\2{2,})', hashtag["text"])
-            special_signals[hashtag["text"]] = True if len(temp_list) else False
+            special_signals[hashtag["text"]] = 1 if len(temp_list) else 0
 
         return special_signals
 
     def __get_hashtags_no_caps(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes whether they contain only lowercase letters or not
+            returns a dictionary of (hashtag, 1/0) attributes whether they contain only lowercase letters or not
+            1: true
+            0: false
         """
         no_caps = {}
         for hashtag in self.hashtags:
-            no_caps[hashtag["text"]] = hashtag["text"].islower()
+            no_caps[hashtag["text"]] = 1 if hashtag["text"].islower() else 0
 
         return no_caps
 
     def __get_hashtags_any_caps(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes whether they contain any capital letters or not
+            returns a dictionary of (hashtag, 1/0) attributes whether they contain any capital letters or not
+            1: true
+            0: false
         """
         any_caps = {}
         for hashtag in self.hashtags:
-            any_caps[hashtag["text"]] = any(char.isupper() for char in hashtag["text"])
+            any_caps[hashtag["text"]] = 1 if any(char.isupper() for char in hashtag["text"]) else 0
 
         return any_caps
 
     def __get_hashtags_all_caps(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes whether they contain only capital letters or not
+            returns a dictionary of (hashtag, 1/0) attributes whether they contain only capital letters or not
+            1: true
+            0: false
         """
         all_caps = {}
         for hashtag in self.hashtags:
-            all_caps[hashtag["text"]] = hashtag["text"].isupper()
+            all_caps[hashtag["text"]] = 1 if hashtag["text"].isupper() else 0
 
         return all_caps
 
     def __get_hashtags_contain_digits(self):
         """
-            returns a dictionary of (hashtag, true/false) attributes whether they contain digits or not
+            returns a dictionary of (hashtag, 1/0) attributes whether they contain digits or not.
+            1: true
+            0: false
         """
         contain_digits = {}
         for hashtag in self.hashtags:
-            contain_digits[hashtag["text"]] = any(char.isdigit() for char in hashtag["text"])
+            contain_digits[hashtag["text"]] = 1 if any(char.isdigit() for char in hashtag["text"]) else 0
 
         return contain_digits
 
@@ -158,8 +169,11 @@ class HashtagFeatureExtractor(FeatureExtractor):
 
     def __get_hashtag_sentiment(self):
         """
-            Returns a dictionary of (hashtag, positive/neutral/negative) attributes.
+            Returns a dictionary of (hashtag, 2/1/0) attributes.
             The sentiment is extracted as the majority of distinct tweet sentiments
+            0: negative
+            1: neutral
+            2: positive
         """
         hashtag_sentiment = {}
         for hashtag in self.hashtags:

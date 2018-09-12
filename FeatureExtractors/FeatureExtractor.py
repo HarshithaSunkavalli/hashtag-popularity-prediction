@@ -73,7 +73,10 @@ class FeatureExtractor:
 
     def get_tweets_sentiment(self):
         """
-            returns a dictionary of (tweet_id, positive/neutral/negative) attributes.
+            returns a dictionary of (tweet_id, 2/1/0) attributes.
+            0: negative
+            1: neutral
+            2: positive
         """
         analyzer = SentimentIntensityAnalyzer()
 
@@ -88,11 +91,11 @@ class FeatureExtractor:
             sentiment = vs['compound']
 
             if sentiment >= 0.5:
-                tweet_sentiment[tweet["id_str"]] = "positive"
+                tweet_sentiment[tweet["id_str"]] = 2
             elif sentiment > -0.5 and sentiment < 0.5:
-                tweet_sentiment[tweet["id_str"]] = "neutral"
+                tweet_sentiment[tweet["id_str"]] = 1
             else:
-                tweet_sentiment[tweet["id_str"]] = "negative"
+                tweet_sentiment[tweet["id_str"]] = 0
 
         return tweet_sentiment
 
