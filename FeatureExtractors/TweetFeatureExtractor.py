@@ -21,7 +21,7 @@ class TweetFeatureExtractor(FeatureExtractor):
         tweet_features["mention_ratio"] = self.__get_mention_ratio()
         tweet_features["url_ratio"] = self.__get_url_ratio()
         #topic feature
-        tweet_features["topic"] = self.__get_topic()
+        #tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
         tweet_features["word_divergence_distribution"] = self.__get_word_divergence()
 
