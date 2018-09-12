@@ -2,6 +2,7 @@ import DbHandler
 from FeatureExtractors.HashtagFeatureExtractor import HashtagFeatureExtractor
 from FeatureExtractors.TweetFeatureExtractor import TweetFeatureExtractor
 from FeatureExtractors.IOHandler import IOHandler
+from DeepLearning.AutoEncoder import AutoEncoder
 
 if __name__ == '__main__':
     db_handler = DbHandler.DbHandler()
@@ -19,3 +20,6 @@ if __name__ == '__main__':
     data, labels = ioHandler.preprocessHashtagFeatures(hashtag_features)
 
     ioHandler.writeToCSV(labels, data)
+
+    autoencoder = AutoEncoder()
+    autoencoder.run()
