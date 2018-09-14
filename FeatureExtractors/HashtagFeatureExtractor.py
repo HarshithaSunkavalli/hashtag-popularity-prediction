@@ -41,15 +41,14 @@ class HashtagFeatureExtractor(FeatureExtractor):
         for hashtag in self.hashtags:
             hashtag_ratio[hashtag["text"]] = []
 
-        for tweet_hashtag in self.tweet_hashtag_map.items():
-            tweet_id = tweet_hashtag[0]
-            tweet = self.dbHandler.getTweetById(tweet_id)
+        for tweetId, hashtagList in self.tweet_hashtag_map.items():
+
+            tweet = self.dbHandler.getTweetById(tweetId)
 
             text = self.get_tweet_text(tweet)
             word_list = text.split()
 
-            hashtag_list = tweet_hashtag[1]
-            for hashtag in hashtag_list:
+            for hashtag in hashtagList:
                 pattern = "#{}".format(hashtag["text"])
 
                 position = word_list.index(pattern)

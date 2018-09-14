@@ -14,7 +14,7 @@ class FeatureExtractor:
 
     def __init__(self, dbHandler):
         self.dbHandler = dbHandler
-        self.tweets = list(self.dbHandler.getTweets())
+        self.tweets = list(self.dbHandler.getTweetsByNum(40))
         self.tweet_hashtag_map = {}
         self.hashtags = self.__get_hashtags()
 
@@ -50,24 +50,24 @@ class FeatureExtractor:
             first_level_potential_hashtags = tweet["entities"]["hashtags"]
             if first_level_potential_hashtags:
                 hashtags.extend(first_level_potential_hashtags)
-
         # extended_tweet
-        if tweet["truncated"] and "retweeted_status" not in tweet:
+        elif tweet["truncated"] and "retweeted_status" not in tweet:
             extended_potential_hashtags = tweet["extended_tweet"]["entities"]["hashtags"]
             if extended_potential_hashtags:
                 hashtags.extend(extended_potential_hashtags)
-
         # retweet with no extended_tweet field
-        if "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
+        # retweeted will be false if retweet has happened not using by using the button but the RT instead
+        elif "retweeted_status" in tweet and (tweet["retweeted"]) and (not tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["entities"]["hashtags"]
             if retweeted_potential_hashtags:
                 hashtags.extend(retweeted_potential_hashtags)
-
         # retweet with extended_tweet field
-        if ("retweeted_status" in tweet) and (tweet["retweeted_status"]["truncated"]):
+        elif ("retweeted_status" in tweet) and (tweet["retweeted"]) and (tweet["retweeted_status"]["truncated"]):
             retweeted_potential_hashtags = tweet["retweeted_status"]["extended_tweet"]["entities"]["hashtags"]
             if retweeted_potential_hashtags:
                 hashtags.extend(retweeted_potential_hashtags)
+        else:
+            pass
 
         tweet_hashtag_map[tweet["id_str"]] = hashtags
 
@@ -103,11 +103,12 @@ class FeatureExtractor:
         """
             returns the text of the given tweet json
         """
+        print(tweet)
         if "extended_tweet" in tweet:
             text = tweet["extended_tweet"]["full_text"]
-        elif "retweeted_status" in tweet and (not tweet["retweeted_status"]["truncated"]):
+        elif "retweeted_status" in tweet and tweet["retweeted"] and (not tweet["retweeted_status"]["truncated"]):
             text = tweet["retweeted_status"]["text"]
-        elif "retweeted_status" in tweet and (tweet["retweeted_status"]["truncated"]):
+        elif "retweeted_status" in tweet and tweet["retweeted"] and (tweet["retweeted_status"]["truncated"]):
             text = tweet["retweeted_status"]["extended_tweet"]["full_text"]
         else:
             text = tweet["text"]
