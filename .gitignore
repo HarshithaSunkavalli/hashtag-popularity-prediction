@@ -108,3 +108,4 @@ venv.bak/
 
 # pycharm related folder
 .idea/
+*.iml
