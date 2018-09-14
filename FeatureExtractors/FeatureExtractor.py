@@ -103,7 +103,6 @@ class FeatureExtractor:
         """
             returns the text of the given tweet json
         """
-        print(tweet)
         if "extended_tweet" in tweet:
             text = tweet["extended_tweet"]["full_text"]
         elif "retweeted_status" in tweet and tweet["retweeted"] and (not tweet["retweeted_status"]["truncated"]):
