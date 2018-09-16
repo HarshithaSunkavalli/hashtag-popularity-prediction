@@ -46,13 +46,15 @@ class HashtagFeatureExtractor(FeatureExtractor):
             tweet = self.dbHandler.getTweetById(tweetId)
 
             text = self.get_tweet_text(tweet)
+            text = re.sub(r"[^\w\s(#)]", ' ', text)# replace special characters with a space
             word_list = text.split()
-            word_list = [re.sub(r'[^\w\s(?<#)]','',w) for w in word_list]#remove special characters
+
+            print(word_list)
 
             for hashtag in hashtagList:
                 pattern = "#{}".format(hashtag["text"])
 
-                print(word_list)
+
                 position = word_list.index(pattern)
                 ratio = position / len(word_list)
                 hashtag_ratio[hashtag["text"]].append(ratio)
