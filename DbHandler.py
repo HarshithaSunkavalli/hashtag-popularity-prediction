@@ -8,12 +8,20 @@ class DbHandler:
 
     def getTweets(self):
         tweets = self.db["plastic"].find({}) #use curly brackets to bypass default return limit
-        return tweets
+        return list(tweets)
 
     def getTweetsByNum(self, num):
         tweets = self.db["plastic"].find({}).limit(num)
-        return tweets
+        return list(tweets)
 
     def getTweetById(self, id):
         tweet = self.db["plastic"].find_one({"id_str": id})
         return tweet
+
+    def getTweetsFromTopK(self):
+        tweets = self.db["topK"].find({})
+        return list(tweets)
+
+    def storeTopKTweets(self, tweets):
+        collection = self.db["topK"]
+        collection.insert_many(tweets)

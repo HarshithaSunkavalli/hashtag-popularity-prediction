@@ -2,6 +2,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import re
 import itertools
 import operator
+from collections import Counter
 
 class FeatureExtractor:
 
@@ -12,11 +13,52 @@ class FeatureExtractor:
         self.tweet_hashtag_map
     """
 
-    def __init__(self, dbHandler):
+    def __init__(self, dbHandler, k=False):
         self.dbHandler = dbHandler
-        self.tweets = list(self.dbHandler.getTweetsByNum(40))
         self.tweet_hashtag_map = {}
+
+        if not k:
+            self.tweets = self.dbHandler.getTweetsByNum(40)
+        else:
+            self.tweets = self.dbHandler.getTweetsFromTopK()#contains tweets for top 10 hashtags
+
+        #run once to create collection
+        #self.dbHandler.storeTopKTweets(self.__get_tweets_for_top_k_hashtags(10))
+
         self.hashtags = self.__get_hashtags()
+
+    def __get_tweets_for_top_k_hashtags(self, k):
+        """
+        :param k: number of top hashtags
+        :return: the tweets containing only top k hashtags
+        """
+        if k==0:
+            self.tweets = []
+            return
+
+
+        tweets = self.dbHandler.getTweetsByNum(10000)
+
+        hashtags = []
+        tweet_hashtag_map = {}
+        for tweet in tweets:
+            tweetHashtags = self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
+            tweetHashtags = [h["text"] for h in tweetHashtags]
+            hashtags.extend(tweetHashtags)
+
+        counter = Counter(hashtags)
+        top_k = counter.most_common(k)#returns tuples of (hashtag, frequency)
+        top_k = [h[0] for h in top_k]
+
+        tweets_to_return = []
+        for tweetId, hashtagList in tweet_hashtag_map.items():
+            tweet = self.dbHandler.getTweetById(tweetId)
+            for hashtag in hashtagList:
+                if hashtag["text"] in top_k:
+                    tweets_to_return.append(tweet)
+                    break
+
+        return  tweets_to_return
 
     def __get_hashtags(self):
         """
@@ -27,22 +69,21 @@ class FeatureExtractor:
         """
 
         tweet_hashtag_map = {}
-        for tweet in self.tweets:
-            self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
-
         hashtags = []
-        for hashtag_list in tweet_hashtag_map.values():
-            for hashtag in hashtag_list:
-                if hashtag not in hashtags:
+        for tweet in self.tweets:
+            tweetHashtags = self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
+            for hashtag in tweetHashtags:
+                if hashtag not in hashtags:#keep only a unique hashtag appearance
                     hashtags.append(hashtag)
 
         self.tweet_hashtag_map = tweet_hashtag_map
 
         return hashtags
 
-    def __get_hashtags_from_tweet(self, tweet, tweet_hashtag_map):
+    def __get_hashtags_from_tweet(self, tweet, tweet_hashtag_map=None):
         """
             Private method used to extract hashtags from the given tweet.
+            :return: the hashtags
         """
         hashtags = []
         # simple tweet
@@ -69,7 +110,10 @@ class FeatureExtractor:
         else:
             pass
 
-        tweet_hashtag_map[tweet["id_str"]] = hashtags
+        if tweet_hashtag_map is not None:
+            tweet_hashtag_map[tweet["id_str"]] = hashtags
+
+        return hashtags
 
     def get_tweets_sentiment(self):
         """
