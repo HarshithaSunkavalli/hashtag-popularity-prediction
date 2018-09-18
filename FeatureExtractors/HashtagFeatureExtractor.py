@@ -1,6 +1,7 @@
 from .FeatureExtractor import FeatureExtractor
 import numpy as np
 import re
+from datetime import datetime, timedelta
 
 class HashtagFeatureExtractor(FeatureExtractor):
 
@@ -27,6 +28,7 @@ class HashtagFeatureExtractor(FeatureExtractor):
         hashtag_features["location"] = self.__get_hashtags_location()
         # hashtag sentiment feature
         hashtag_features["hashtag_sentiment"] = self.__get_hashtag_sentiment()
+        hashtag_features["created_at"], hashtag_features["lifespan"] = self.__get_hashtags_created_at_and_lifespan()
 
         return hashtag_features
 
@@ -190,3 +192,34 @@ class HashtagFeatureExtractor(FeatureExtractor):
                              hashtag_sentiment.items()}
 
         return hashtag_sentiment
+
+
+    def __get_hashtags_created_at_and_lifespan(self):
+        """
+        :return: the return of __get_hashtag_creation_time_and_lifespan for every hashtag in dictionary form
+        """
+        hashtag_creation = {hashtag["text"]: self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])[0] for hashtag in self.hashtags}
+        hashtag_lifespan = {hashtag["text"]: self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])[1] for hashtag in self.hashtags}
+        return hashtag_creation, hashtag_lifespan
+
+
+    def __get_hashtag_creation_time_and_lifespan(self, hashtag):
+        """
+        :param hashtag: the hashtag to calculate creation time and lifespan
+        :return: the creation time and lifespan of given hashtag
+        """
+        hashtag_creation_time = []
+        for tweetId, hashtagList in self.tweet_hashtag_map.items():
+            for h in hashtagList:
+                if hashtag == h["text"]:
+                    tweet = self.dbHandler.getTweetById(tweetId)
+                    created_at = tweet["created_at"]
+                    hashtag_creation_time.append(created_at)
+
+        if len(hashtag_creation_time) == 1:
+            return hashtag_creation_time[0], timedelta()#return the same object as the else statement
+        else:
+            oldest = min(hashtag_creation_time)
+            newest = max(hashtag_creation_time)
+            lifespan = newest - oldest
+            return oldest, lifespan

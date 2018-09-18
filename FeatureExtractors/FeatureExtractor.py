@@ -27,6 +27,7 @@ class FeatureExtractor:
 
         self.hashtags = self.__get_hashtags()
 
+
     def __get_tweets_for_top_k_hashtags(self, k):
         """
         :param k: number of top hashtags
