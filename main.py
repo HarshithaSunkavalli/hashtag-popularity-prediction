@@ -4,7 +4,11 @@ from FeatureExtractors.TweetFeatureExtractor import TweetFeatureExtractor
 from FeatureExtractors.IOHandler import IOHandler
 from DeepLearning.AutoEncoder import AutoEncoder
 
-if __name__ == '__main__':
+def createFeatureCSV():
+    """
+        Processes tweets and hashtags to produce the necessary features.
+        Writes the features in a CSV.
+    """
     db_handler = DbHandler.DbHandler()
 
     feature_extractor = HashtagFeatureExtractor(db_handler, k=True)
@@ -21,5 +25,10 @@ if __name__ == '__main__':
 
     ioHandler.writeToCSV(labels, data)
 
+if __name__ == '__main__':
+
+    #createFeatureCSV()
+
     autoencoder = AutoEncoder()
     autoencoder.reduce_dimensions()
+

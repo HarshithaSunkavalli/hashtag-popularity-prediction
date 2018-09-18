@@ -41,7 +41,7 @@ class IOHandler:
         :param data: list of dictionary key value items. First key: value must be hashtag: hashtag value.
         """
 
-        with open("features.csv", "w", newline="") as csvfile:
+        with open("features.csv", "w", newline="", encoding="utf-8") as csvfile:
 
             writer = csv.DictWriter(csvfile, fieldnames=labels)
             writer.writeheader()
@@ -49,6 +49,9 @@ class IOHandler:
             for i in range(len(data)):
                 dictionary = {} # contains a specific hashtag features
                 for label, value in data[i].items():
+                    print(label)
+                    print(value)
+                    print("====================")
                     dictionary.update({label: value})
 
                 writer.writerow(dictionary)

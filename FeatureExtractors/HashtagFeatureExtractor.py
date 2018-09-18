@@ -49,8 +49,6 @@ class HashtagFeatureExtractor(FeatureExtractor):
             text = re.sub(r"[^\w\s(#)]", ' ', text)# replace special characters with a space
             word_list = text.split()
 
-            print(word_list)
-
             for hashtag in hashtagList:
                 pattern = "#{}".format(hashtag["text"])
 
