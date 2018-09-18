@@ -14,7 +14,7 @@ class AutoEncoder:
         :param num_dimensions: the number of dimensions the feature vector will be reduced to. Default 2
         :return: the reduced feature vector
         """
-        values= self.data.drop("hashtag", axis=1).values
+        values= self.sanitize_features()
 
         #scale data
         scaler = MinMaxScaler()
@@ -63,3 +63,6 @@ class AutoEncoder:
 
         return output
 
+    def sanitize_features(self):
+        values = self.data.drop(["hashtag","created_at","lifespan"], axis=1).values
+        return  values
