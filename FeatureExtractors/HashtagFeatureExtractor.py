@@ -1,6 +1,7 @@
 from .FeatureExtractor import FeatureExtractor
 import numpy as np
 import re
+import time
 from datetime import datetime, timedelta
 
 class HashtagFeatureExtractor(FeatureExtractor):
@@ -206,7 +207,7 @@ class HashtagFeatureExtractor(FeatureExtractor):
     def __get_hashtag_creation_time_and_lifespan(self, hashtag):
         """
         :param hashtag: the hashtag to calculate creation time and lifespan
-        :return: the creation time and lifespan of given hashtag
+        :return: the creation time (as a distance from Unix time: January 1, 1970) and lifespan (in seconds) of given hashtag
         """
         hashtag_creation_time = []
         for tweetId, hashtagList in self.tweet_hashtag_map.items():
@@ -217,9 +218,9 @@ class HashtagFeatureExtractor(FeatureExtractor):
                     hashtag_creation_time.append(created_at)
 
         if len(hashtag_creation_time) == 1:
-            return hashtag_creation_time[0], timedelta()#return the same object as the else statement
+            return time.mktime(hashtag_creation_time[0].timetuple()), timedelta().total_seconds()#return the same object as the else statement
         else:
             oldest = min(hashtag_creation_time)
             newest = max(hashtag_creation_time)
             lifespan = newest - oldest
-            return oldest, lifespan
+            return time.mktime(oldest.timetuple()), lifespan.total_seconds()

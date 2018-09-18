@@ -15,7 +15,7 @@ def createFeatureCSV():
     tweet_feature_extractor = TweetFeatureExtractor(db_handler, k=True)
 
     hashtag_features = feature_extractor.get_hashtag_features()
-    tweet_features = tweet_feature_extractor.get_tweet_features()
+    """tweet_features = tweet_feature_extractor.get_tweet_features()
 
     features = hashtag_features
     features.update(tweet_features)
@@ -23,11 +23,11 @@ def createFeatureCSV():
     ioHandler = IOHandler()
     data, labels = ioHandler.preprocessHashtagFeatures(hashtag_features)
 
-    ioHandler.writeToCSV(labels, data)
+    ioHandler.writeToCSV(labels, data)"""
 
 if __name__ == '__main__':
 
-    #createFeatureCSV()
+    createFeatureCSV()
 
     autoencoder = AutoEncoder()
     autoencoder.reduce_dimensions()
