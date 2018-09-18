@@ -49,9 +49,6 @@ class IOHandler:
             for i in range(len(data)):
                 dictionary = {} # contains a specific hashtag features
                 for label, value in data[i].items():
-                    print(label)
-                    print(value)
-                    print("====================")
                     dictionary.update({label: value})
 
                 writer.writerow(dictionary)

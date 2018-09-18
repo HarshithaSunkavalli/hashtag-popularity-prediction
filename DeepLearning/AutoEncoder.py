@@ -51,14 +51,14 @@ class AutoEncoder:
             output = hidden.eval(feed_dict={X: scaled_values})
 
         """
-            import matplotlib.pyplot as plt
-            import matplotlib as mpl
-            mpl.style.use("seaborn")
-            plt.plot(temp[:], 'go-')
-            plt.title("15 - 2 Linear PCA AutoEncoder")
-            plt.xlabel("100-iteration step")
-            plt.ylabel("Loss")
-            plt.show()
+        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        mpl.style.use("seaborn")
+        plt.plot(temp[:], 'go-')
+        plt.title("15 - 2 Linear PCA AutoEncoder")
+        plt.xlabel("100-iteration step")
+        plt.ylabel("Loss")
+        plt.show()
         """
 
         return output
