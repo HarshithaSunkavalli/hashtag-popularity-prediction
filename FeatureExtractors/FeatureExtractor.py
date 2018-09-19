@@ -12,6 +12,8 @@ class FeatureExtractor:
         self.dbHandler
         self.tweet_hashtag_map
     """
+    K = 10
+    TWEETS_TO_FETCH = 10000
 
     def __init__(self, dbHandler, k=False):
         self.dbHandler = dbHandler
@@ -23,7 +25,7 @@ class FeatureExtractor:
             self.tweets = self.dbHandler.getTweetsFromTopK()#contains tweets for top 10 hashtags
 
         #run once to create collection
-        #self.dbHandler.storeTopKTweets(self.__get_tweets_for_top_k_hashtags(10))
+        #self.dbHandler.storeTopKTweets(self.__get_tweets_for_top_k_hashtags(self.K))
 
         self.hashtags = self.__get_hashtags()
 
@@ -38,7 +40,7 @@ class FeatureExtractor:
             return
 
 
-        tweets = self.dbHandler.getTweetsByNum(10000)
+        tweets = self.dbHandler.getTweetsByNum(self.TWEETS_TO_FETCH)
 
         hashtags = []
         tweet_hashtag_map = {}
