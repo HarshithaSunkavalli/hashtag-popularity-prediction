@@ -25,3 +25,9 @@ class DbHandler:
     def storeTopKTweets(self, tweets):
         collection = self.db["topK"]
         collection.insert_many(tweets)
+
+    def getTweetsForHashtag(self, hashtag="India"):
+        collection = self.db["topK"]
+        tweets = list(collection.find({"entities.hashtags.text" : "{}".format(hashtag)}))
+
+        return tweets
