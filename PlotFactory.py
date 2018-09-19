@@ -51,7 +51,6 @@ class PlotFactory:
     def hashtag_appearance_for_top_k(self):
         """
         Calculates the top K hashtags and plots their date-frequency plot
-        :return:
         """
         hashtag_popularity = {}
         for hashtag in self.hashtags:
