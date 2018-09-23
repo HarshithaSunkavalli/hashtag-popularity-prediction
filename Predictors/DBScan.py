@@ -1,81 +1,78 @@
 from scipy.spatial.distance import squareform, pdist
 
-class Predictors:
+class DBScan:
 
-    def __init__(self, D, eps, MinPts, features):
-        self.D = D
+    def __init__(self, users, eps, MinPts):
+        self.featureLength = len(users)
         self.eps = eps
         self.MinPts = MinPts
-        self.DistanceMatrix = self.__calcDistanceMatrix(features)
+        self.DistanceMatrix = self.__calcDistanceMatrix(users)
 
     def run(self):
         """
-        Cluster the dataset `D` using the DBSCAN algorithm.
-
-        MyDBSCAN takes a dataset `D` (a list of vectors), a threshold distance
+        MyDBSCAN takes a dataset `users` (a list of vectors), a threshold distance
         `eps`, and a required number of points `MinPts`.
 
         It will return a list of cluster labels. The label -1 means noise, and then
         the clusters are numbered starting from 1.
         """
 
-        # This list will hold the final cluster assignment for each point in D.
+        # This list will hold the final cluster assignment for each user in users.
         # There are two reserved values:
-        #    -1 - Indicates a noise point
-        #     0 - Means the point hasn't been considered yet.
+        #    -1 - Indicates a noise user
+        #     0 - Means the user hasn't been considered yet.
         # Initially all labels are 0.
-        labels = [0] * len(self.D)
+        labels = [0] * self.featureLength
 
         # id is the ID of the current cluster.
         id = 0
 
-        # This outer loop is just responsible for picking new seed points--a point
+        # This outer loop is just responsible for picking new seed points--a user
         # from which to grow a new cluster.
-        # Once a valid seed point is found, a new cluster is created, and the
+        # Once a valid seed user is found, a new cluster is created, and the
         # cluster growth is all handled by the 'expandCluster' routine.
 
-        # For each point point in the Dataset D...
-        # ('point' is the index of the datapoint, rather than the datapoint itself.)
-        for point in range(0, len(self.D)):
+        # For each user user in users...
+        # ('user' is the index of the user, rather than the user itself.)
+        for user in range(0, self.featureLength):
 
             #pick only unvisited nodes
-            if not (labels[point] == 0):
+            if not (labels[user] == 0):
                 continue
 
             # Find neighbors
-            NeighborPts = self.__regionQuery(self.D, point, self.eps, self.DistanceMatrix)
+            NeighborPts = self.__regionQuery(user)
 
-            # If the number is below MinPts, this point is noise.
+            # If the number is below MinPts, this user is noise.
             if len(NeighborPts) < self.MinPts:
-                labels[point] = -1
-            # Otherwise, if there are at least MinPts nearby, use this point as the
+                labels[user] = -1
+            # Otherwise, if there are at least MinPts nearby, use this user as the
             # seed for a new cluster.
             else:
                 id += 1
-                self.__growCluster(labels, point, NeighborPts, id)
+                self.__growCluster(labels, user, NeighborPts, id)
 
-        # All data has been clustered!
         return labels, id
 
-    def __growCluster(self, labels, point, NeighborPts, id):
+    def __growCluster(self, labels, user, NeighborPts, id):
         """
-        Grow a new cluster with label `id` from the seed point `point`.
+        Grow a new cluster with label `id` from the seed user `user`.
 
         This function searches through the dataset to find all points that belong
         to this new cluster. When this function returns, cluster `id` is complete.
 
         Parameters:
           `labels` - List storing the cluster labels for all dataset points
-          `point`      - Index of the seed point for this new cluster
-          `NeighborPts` - All of the neighbor of `point`
+          `user`      - Index of the seed user for this new cluster
+          `NeighborPts` - All of the neighbor of `user`
           `id`      - The label for this new cluster.
         """
-        # Assign the cluster label to the seed point.
-        labels[point] = id
+        # Assign the cluster label to the seed user.
+        labels[user] = id
 
         i = 0
         while i < len(NeighborPts):
-            # Get the next point from the queue.
+            # Get the next user from the queue.
             neighbor = NeighborPts[i]
 
             # If neighbor was labelled NOISE make it leaf node
@@ -98,15 +95,15 @@ class Predictors:
 
             i += 1
 
-    def __regionQuery(self, point):
+    def __regionQuery(self, user):
         """
-        Find all points in dataset `D` within distance `eps` of point `point`.
+        Find all users within distance `eps` of user `user`.
         """
         neighbors = []
 
-        # For each point in the dataset...
-        for Pn in range(0, len(self.D)):
-            if self.DistanceMatrix[point, Pn] < self.eps:
+        # For each user in the dataset
+        for Pn in range(0, self.featureLength):
+            if self.DistanceMatrix[user, Pn] < self.eps:
                 neighbors.append(Pn)
 
         return neighbors
@@ -114,7 +111,7 @@ class Predictors:
     def __calcDistanceMatrix(self, l):
         """
         Use euclidean distance implementation
-        :param l: list of features
+        :param l: list of users and their features
         :return: distance matrix
         """
         dist = squareform(pdist(l, 'euclidean'))
