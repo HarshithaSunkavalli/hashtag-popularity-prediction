@@ -1,4 +1,5 @@
 import csv
+import pandas as pd
 
 class IOHandler:
 
@@ -52,3 +53,6 @@ class IOHandler:
                     dictionary.update({label: value})
 
                 writer.writerow(dictionary)
+
+    def readFromCSV(self, csv="features.csv"):
+        return pd.read_csv(csv)
