@@ -6,8 +6,8 @@ import numpy as np
 
 class AutoEncoder:
 
-    def __init__(self, csv="features.csv"):
-        self.data = pd.read_csv(csv)
+    def __init__(self, data):
+        self.data = data
         self.hashtags = self.data["hashtag"].values
 
     def reduce_dimensions(self, num_dimensions=4):
