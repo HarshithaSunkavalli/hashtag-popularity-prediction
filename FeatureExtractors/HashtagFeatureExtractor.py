@@ -229,8 +229,17 @@ class HashtagFeatureExtractor(FeatureExtractor):
         """
         :return: the return of __get_hashtag_creation_time_and_lifespan for every hashtag in dictionary form
         """
-        hashtag_creation = {hashtag["text"]: self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])[0] for hashtag in self.hashtags}
-        hashtag_lifespan = {hashtag["text"]: self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])[1] for hashtag in self.hashtags}
+        hashtag_creation = {}
+        hashtag_lifespan = {}
+        for hashtag in self.hashtags:
+            hashtag_creation[hashtag["text"]] = 0
+            hashtag_lifespan[hashtag["text"]] = 0
+
+        for hashtag in self.hashtags:
+            values = self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])
+            hashtag_creation[hashtag["text"]] = values[0]
+            hashtag_lifespan[hashtag["text"]] = values[1]
+
         return hashtag_creation, hashtag_lifespan
 
 
