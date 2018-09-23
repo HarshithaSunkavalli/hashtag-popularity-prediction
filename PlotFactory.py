@@ -1,4 +1,3 @@
-import pandas as pd
 from collections import Counter
 from collections import OrderedDict
 from operator import itemgetter
@@ -9,9 +8,9 @@ class PlotFactory:
 
     K = 10
 
-    def __init__(self, dbHandler, csv="features.csv"):
+    def __init__(self, dbHandler, data):
         self.dbHandler = dbHandler
-        self.data = pd.read_csv(csv)
+        self.data = data
         self.hashtags = self.data["hashtag"].values
 
         self.get_tweets_for_hashtags()
