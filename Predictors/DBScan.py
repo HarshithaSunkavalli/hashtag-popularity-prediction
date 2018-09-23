@@ -1,11 +1,12 @@
+from scipy.spatial.distance import squareform, pdist
 
 class Predictors:
 
-    def __init__(self, D, eps, MinPts, DistanceMatrix):
+    def __init__(self, D, eps, MinPts, features):
         self.D = D
         self.eps = eps
         self.MinPts = MinPts
-        self.DistanceMatrix = DistanceMatrix
+        self.DistanceMatrix = self.__calcDistanceMatrix(features)
 
     def run(self):
         """
@@ -42,7 +43,7 @@ class Predictors:
                 continue
 
             # Find neighbors
-            NeighborPts = self.regionQuery(self.D, point, self.eps, self.DistanceMatrix)
+            NeighborPts = self.__regionQuery(self.D, point, self.eps, self.DistanceMatrix)
 
             # If the number is below MinPts, this point is noise.
             if len(NeighborPts) < self.MinPts:
@@ -51,12 +52,12 @@ class Predictors:
             # seed for a new cluster.
             else:
                 id += 1
-                self.growCluster(labels, point, NeighborPts, id)
+                self.__growCluster(labels, point, NeighborPts, id)
 
         # All data has been clustered!
         return labels, id
 
-    def growCluster(self, labels, point, NeighborPts, id):
+    def __growCluster(self, labels, point, NeighborPts, id):
         """
         Grow a new cluster with label `id` from the seed point `point`.
 
@@ -87,7 +88,7 @@ class Predictors:
                 labels[neighbor] = id
 
                 # Find all the neighbor of neighbor
-                neighbors = self.regionQuery(neighbor)
+                neighbors = self.__regionQuery(neighbor)
 
                 setExpandedNeighbors = set(neighbors)
                 setNeighbors = set(NeighborPts)
@@ -97,7 +98,7 @@ class Predictors:
 
             i += 1
 
-    def regionQuery(self, point):
+    def __regionQuery(self, point):
         """
         Find all points in dataset `D` within distance `eps` of point `point`.
         """
@@ -109,3 +110,13 @@ class Predictors:
                 neighbors.append(Pn)
 
         return neighbors
+
+    def __calcDistanceMatrix(self, l):
+        """
+        Use euclidean distance implementation
+        :param l: list of features
+        :return: distance matrix
+        """
+        dist = squareform(pdist(l, 'euclidean'))
+
+        return dist
