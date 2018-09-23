@@ -29,9 +29,39 @@ class HashtagFeatureExtractor(FeatureExtractor):
         hashtag_features["location"] = self.__get_hashtags_location()
         # hashtag sentiment feature
         hashtag_features["hashtag_sentiment"] = self.__get_hashtag_sentiment()
+        hashtag_features["popularity"] = self.__get_hashtag_popularity()
         hashtag_features["created_at"], hashtag_features["lifespan"] = self.__get_hashtags_created_at_and_lifespan()
 
         return hashtag_features
+
+    def __get_hashtag_popularity(self):
+        """
+        :return: a dictionary of (hashtag, ratio) attributes.
+        """
+        hashtag_tweet_map = self.__get_tweets_for_hashtags()
+
+        hashtag_popularity = {}
+        for hashtag in self.hashtags:
+            hashtag_popularity[hashtag["text"]] = 0
+
+        hashtag_popularity = {hashtag: len(tweetList) for hashtag, tweetList in hashtag_tweet_map.items()}
+
+        return hashtag_popularity
+
+    def __get_tweets_for_hashtags(self):
+        """
+        :return: a dictionary of (hashtag, [tweets]) attributes
+        """
+
+        hashtag_tweet_map = {}
+        for hashtag in self.hashtags:
+            hashtag_tweet_map[hashtag["text"]] = []
+
+        for hashtag in self.hashtags:
+            tweets = self.dbHandler.getTweetsForHashtag(hashtag)
+            hashtag_tweet_map[hashtag["text"]].extend(tweets)
+
+        return hashtag_tweet_map
 
     def __get_hashtags_location(self):
         """
