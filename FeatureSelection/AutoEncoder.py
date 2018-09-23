@@ -57,14 +57,14 @@ class AutoEncoder:
 
             output = hidden.eval(feed_dict={X: scaled_values})
 
-        import matplotlib.pyplot as plt
-        import matplotlib as mpl
-        mpl.style.use("seaborn")
-        plt.plot(temp[:], 'go-')
-        plt.title("{} - {} Linear PCA AutoEncoder".format(len(self.data.columns) -1, num_dimensions))
-        plt.xlabel("100-iteration step")
-        plt.ylabel("Loss")
-        plt.show()
+        # import matplotlib.pyplot as plt
+        # import matplotlib as mpl
+        # mpl.style.use("seaborn")
+        # plt.plot(temp[:], 'go-')
+        # plt.title("{} - {} Linear PCA AutoEncoder".format(len(self.data.columns) -1, num_dimensions))
+        # plt.xlabel("100-iteration step")
+        # plt.ylabel("Loss")
+        # plt.show()
 
         result = []
         for i, list in enumerate(output):
@@ -73,8 +73,9 @@ class AutoEncoder:
             list.append(self.data.loc[i, "lifespan"])
             result.append(list)
 
-        return np.array(result)
+        return result
 
     def sanitize_features(self):
         values = self.data.drop(["hashtag","created_at","lifespan"], axis=1)
         return  values
+
