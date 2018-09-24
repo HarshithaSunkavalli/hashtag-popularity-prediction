@@ -25,10 +25,23 @@ class FeatureExtractor:
             self.tweets = self.dbHandler.getTweetsFromTopK()#contains tweets for top 10 hashtags
 
         #run once to create collection
-        #self.dbHandler.storeTopKTweets(self.__get_tweets_for_top_k_hashtags(self.K))
+        #self.tweets, self.hashtags = self.__get_tweets_for_top_k_hashtags(self.K)
+        #self.dbHandler.storeTopKTweets()
 
         self.hashtags = self.__get_hashtags()
+        self.__sanitize_map()
 
+    def __sanitize_map(self):
+        """
+        keep only top k hashtags
+        self.hashtags already contain top k hashtags. But the map itself contains every hashtag that exists in each tweet.
+        """
+        for tweetId, hashtagList in self.tweet_hashtag_map.items():
+            sanitized_hashtags = []
+            for hashtag in hashtagList:
+                if hashtag in self.hashtags:
+                    sanitized_hashtags.append(hashtag)
+            self.tweet_hashtag_map[tweetId] = sanitized_hashtags
 
     def __get_tweets_for_top_k_hashtags(self, k):
         """
@@ -61,7 +74,7 @@ class FeatureExtractor:
                     tweets_to_return.append(tweet)
                     break
 
-        return  tweets_to_return
+        return  tweets_to_return, top_k
 
     def __get_hashtags(self):
         """
@@ -79,9 +92,16 @@ class FeatureExtractor:
                 if hashtag not in hashtags:#keep only a unique hashtag appearance
                     hashtags.append(hashtag)
 
+        hashtag_text = [hashtag["text"] for hashtag in hashtags]
+        counter = Counter(hashtag_text)
+        top_k = counter.most_common(self.K)  # returns tuples of (hashtag, frequency)
+        top_k = [h[0] for h in top_k]
+
+        returned_hashtags = [ hashtag for hashtag in hashtags if hashtag["text"] in top_k]
+
         self.tweet_hashtag_map = tweet_hashtag_map
 
-        return hashtags
+        return returned_hashtags
 
     def __get_hashtags_from_tweet(self, tweet, tweet_hashtag_map=None):
         """
