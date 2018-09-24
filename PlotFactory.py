@@ -51,15 +51,8 @@ class PlotFactory:
         """
         Calculates the top K hashtags and plots their date-frequency plot
         """
-        hashtag_popularity = {}
-        for hashtag in self.hashtags:
-            hashtag_popularity[hashtag] = 0
 
-        for hashtag, tweetList in self.hashtag_tweet_map.items():
-            hashtag_popularity[hashtag] = len(tweetList)
-
-        hashtag_popularity = OrderedDict(sorted(hashtag_popularity.items(), key=itemgetter(1), reverse=True))
-
-        top_k_popular_hashtags = list(hashtag_popularity.keys())[:self.K]
-        for hashtag in top_k_popular_hashtags:
+        top_k_popular_hashtags = self.data.sort_values(by='popularity', ascending=False).head(self.K)
+        for hashtag in top_k_popular_hashtags["hashtag"]:
             self.hashtag_appearance(hashtag)
+
