@@ -49,10 +49,8 @@ class PlotFactory:
 
     def hashtag_appearance_for_top_k(self):
         """
-        Calculates the top K hashtags and plots their date-frequency plot
+        Plot top k hashtag date frequencies
         """
-
-        top_k_popular_hashtags = self.data.sort_values(by='popularity', ascending=False).head(self.K)
-        for hashtag in top_k_popular_hashtags["hashtag"]:
+        for hashtag in self.data["hashtag"]:
             self.hashtag_appearance(hashtag)
 
