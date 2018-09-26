@@ -20,9 +20,9 @@ class AutoEncoder:
         if num_dimensions <= 4:
             num_dimensions = 4
 
-        features= self.sanitize_features()
+        data = self.sanitize_features()
 
-        values = features.values
+        values = data.values
         #scale data
         scaler = MinMaxScaler()
         scaled_values = scaler.fit_transform(values)
@@ -66,12 +66,23 @@ class AutoEncoder:
         # plt.ylabel("Loss")
         # plt.show()
 
-        result = []
-        for i, list in enumerate(output):
-            list = list.tolist()
-            list.append(self.data.loc[i, "created_at"])
-            list.append(self.data.loc[i, "lifespan"])
-            result.append(list)
+        columns_to_return = ["hashtag","created_at","lifespan"]
+
+        #create lists according to the new values
+        num_cols_to_add = output.shape[1]
+        vals_cols_to_add = []
+        for i in range(num_cols_to_add):
+            vals_cols_to_add.append([])
+
+        output = output.tolist()
+
+        result = self.data[columns_to_return]
+        for index, row in result.iterrows():
+            for i in range(num_cols_to_add):
+                vals_cols_to_add[i].append(output[index][i])# add the values of the i th extracted feature to i th list
+
+        for i in range(len(vals_cols_to_add)):
+            result["artificial_feature_{}".format(i)] = vals_cols_to_add[i]
 
         return result
 
