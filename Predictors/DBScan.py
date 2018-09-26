@@ -1,9 +1,10 @@
 from scipy.spatial.distance import squareform, pdist
+from sklearn import preprocessing
 
 class DBScan:
 
     def __init__(self, users, eps, MinPts):
-        self.featureLength = len(users)
+        self.userLength = users.shape[0]
         self.eps = eps
         self.MinPts = MinPts
         self.DistanceMatrix = self.__calcDistanceMatrix(users)
@@ -22,7 +23,7 @@ class DBScan:
         #    -1 - Indicates a noise user
         #     0 - Means the user hasn't been considered yet.
         # Initially all labels are 0.
-        labels = [0] * self.featureLength
+        labels = [0] * self.userLength
 
         # id is the ID of the current cluster.
         id = 0
@@ -34,7 +35,7 @@ class DBScan:
 
         # For each user user in users...
         # ('user' is the index of the user, rather than the user itself.)
-        for user in range(0, self.featureLength):
+        for user in range(self.userLength):
 
             #pick only unvisited nodes
             if not (labels[user] == 0):
@@ -102,18 +103,29 @@ class DBScan:
         neighbors = []
 
         # For each user in the dataset
-        for Pn in range(0, self.featureLength):
+        for Pn in range(self.userLength):
+
             if self.DistanceMatrix[user, Pn] < self.eps:
                 neighbors.append(Pn)
 
         return neighbors
 
-    def __calcDistanceMatrix(self, l):
+    def __calcDistanceMatrix(self, users):
         """
         Use euclidean distance implementation
-        :param l: list of users and their features
+        :param users: users pandas dataframe
         :return: distance matrix
         """
+        users = users.drop(["hashtag"], axis=1)
+
+        #normalize data
+        scaler = preprocessing.MinMaxScaler()
+        users[users.columns] = scaler.fit_transform(users[users.columns])
+
+        l = []
+        for _, row in users.iterrows():
+            l.append(row.tolist())
+
         dist = squareform(pdist(l, 'euclidean'))
 
         return dist

@@ -1,6 +1,4 @@
 from collections import Counter
-from collections import OrderedDict
-from operator import itemgetter
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
