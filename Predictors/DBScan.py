@@ -1,9 +1,14 @@
 from scipy.spatial.distance import squareform, pdist
 from sklearn import preprocessing
+from FeatureSelection.AutoEncoder import AutoEncoder
 
 class DBScan:
 
-    def __init__(self, users, eps, MinPts):
+    def __init__(self, users, eps, MinPts, reduce_dimensions=False):
+        if reduce_dimensions:
+            autoencoder = AutoEncoder(users)
+            users = autoencoder.reduce_dimensions()  # num_dimensions should be bigger than 4. else it runs for 4.
+
         self.userLength = users.shape[0]
         self.eps = eps
         self.MinPts = MinPts
