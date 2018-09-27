@@ -26,7 +26,7 @@ class GRUNN:
         self.train_data["label"] = labels
 
     def extractLabels(self):
-        threshold = 10000
+        threshold = 100
         labels = [0 if row["popularity"] < threshold else 1 for _, row in self.train_data.iterrows() ]
         return labels
 
@@ -43,7 +43,32 @@ class GRUNN:
 
 
     def train(self):
-        self.preprocess(self.train_data)
+
+        num_inputs = 1
+        num_neurons = 100
+        num_outputs = 1
+        learning_rate = 0.0001
+        epochs = 2000
+        batch_size = 1
+
+        X = tf.placeholder(tf.float32, shape=(None, num_inputs))
+        y = tf.placeholder(tf.float32, shape=(None, num_outputs))
+
+
+        #RNN CELL LAYER
+        cell = tf.contrib.rnn.BasicRNNCell(num_units=num_neurons, activation=tf.nn.relu)
+        cell = tf.contrib.rnn.OutputProjectionWrapper(cell, output_size=num_outputs)
+
+        outputs, states = tf.nn.dynamic_rnn(cell, X, dtype=tf.float32)
+
+        loss = tf.reduce_mean(tf.square(outputs -y))
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        train = optimizer.minimize(loss)
+
+
+
+        return self.train_data["label"]
 
 
 
