@@ -66,6 +66,15 @@ class GRUNN:
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
         train = optimizer.minimize(loss)
 
+        #create dataset
+        BATCH_SIZE = 10
+        self.timeData = self.train_data["lifespan"].values
+        self.timeDataLabels = self.train_data["label"].values
+        self.train_dataset = tf.data.Dataset.from_tensor_slices((self.timeData, self.timeDataLabels))
+        self.train_dataset = self.train_dataset.shuffle(buffer_size=10000) # randomly shuffle data
+        self.train_dataset = self.train_dataset.batch(BATCH_SIZE) # batch data
+        self.train_dataset = self.train_dataset.repeat() # repeat indefinitely. control mannualy with epochs
+
 
 
         return self.train_data["label"]
