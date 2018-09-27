@@ -70,6 +70,7 @@ class AutoEncoder:
 
         #create lists according to the new values
         num_cols_to_add = output.shape[1]
+
         vals_cols_to_add = []
         for i in range(num_cols_to_add):
             vals_cols_to_add.append([])
@@ -77,6 +78,7 @@ class AutoEncoder:
         output = output.tolist()
 
         result = self.data[columns_to_return]
+
         for index, row in result.iterrows():
             for i in range(num_cols_to_add):
                 vals_cols_to_add[i].append(output[index][i])# add the values of the i th extracted feature to i th list
