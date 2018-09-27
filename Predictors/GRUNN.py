@@ -26,7 +26,7 @@ class GRUNN:
         self.train_data["label"] = labels
 
     def extractLabels(self):
-        threshold = 100
+        threshold = 20
         labels = [0 if row["popularity"] < threshold else 1 for _, row in self.train_data.iterrows() ]
         return labels
 
@@ -41,6 +41,25 @@ class GRUNN:
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns])
 
+    def next_batch(self, batch_size):
+
+        #fetch random batch
+        batch_data = []
+        batch_labels = []
+        for _ in range(batch_size):
+            index = np.random.randint(0, len(self.timeData))
+            batch_data.append(self.timeData[index])
+            batch_labels.append(self.timeDataLabels[index])
+
+        batch_data = np.array(batch_data)
+        batch_labels = np.array(batch_labels)
+
+        batch_data = np.reshape(batch_data, (batch_size, 1))
+        batch_labels = np.reshape(batch_labels, (batch_size, 1))
+
+        dummy = batch_data.reshape(-1, batch_size, 1).shape
+
+        return batch_data.reshape(-1, batch_size, 1), batch_labels
 
     def train(self):
 
@@ -49,17 +68,18 @@ class GRUNN:
         num_outputs = 1
         learning_rate = 0.0001
         epochs = 2000
-        batch_size = 1
+        BATCH_SIZE = 50
 
-        X = tf.placeholder(tf.float32, shape=(None, num_inputs))
+        X = tf.placeholder(tf.float32, shape=(None, None, num_inputs))
         y = tf.placeholder(tf.float32, shape=(None, num_outputs))
 
 
         #RNN CELL LAYER
-        cell = tf.contrib.rnn.BasicRNNCell(num_units=num_neurons, activation=tf.nn.relu)
+        cell = tf.contrib.rnn.GRUCell(num_units=num_neurons, activation=tf.nn.relu)
         cell = tf.contrib.rnn.OutputProjectionWrapper(cell, output_size=num_outputs)
 
         outputs, states = tf.nn.dynamic_rnn(cell, X, dtype=tf.float32)
+        outputs = tf.nn.softmax(outputs)
 
         loss = tf.reduce_mean(tf.square(outputs -y))
 
@@ -67,17 +87,32 @@ class GRUNN:
         train = optimizer.minimize(loss)
 
         #create dataset
-        BATCH_SIZE = 10
+
         self.timeData = self.train_data["lifespan"].values
         self.timeDataLabels = self.train_data["label"].values
-        self.train_dataset = tf.data.Dataset.from_tensor_slices((self.timeData, self.timeDataLabels))
-        self.train_dataset = self.train_dataset.shuffle(buffer_size=10000) # randomly shuffle data
-        self.train_dataset = self.train_dataset.batch(BATCH_SIZE) # batch data
-        self.train_dataset = self.train_dataset.repeat() # repeat indefinitely. control mannualy with epochs
 
+        init = tf.global_variables_initializer()
 
+        # SESSION
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.85)  # for a GPU Bug
+        saver = tf.train.Saver()
+
+        with tf.Session(config= tf.ConfigProto(gpu_options=gpu_options)) as sess:
+            sess.run(init)
+
+            for epoch in range(epochs):
+                X_batch, y_batch = self.next_batch(BATCH_SIZE)
+
+                sess.run(train, feed_dict={X: X_batch, y: y_batch})
+
+                if epoch % 100 == 0:
+                    mse = loss.eval(feed_dict={X: X_batch, y: y_batch})
+                    print(epoch, "\tMSE", mse)
+
+            saver.save(sess, "./rnn_time_series_model")
 
         return self.train_data["label"]
+
 
 
 
