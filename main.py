@@ -3,11 +3,11 @@ import PlotFactory
 from FeatureExtractors.HashtagFeatureExtractor import HashtagFeatureExtractor
 from FeatureExtractors.TweetFeatureExtractor import TweetFeatureExtractor
 from FeatureExtractors.IOHandler import IOHandler
-from FeatureSelection.AutoEncoder import AutoEncoder
 from Predictors.DBScan import DBScan
 from Predictors.GRUNN import GRUNN
+from Predictors.NaiveBayes import NaiveBayes
 
-CLUSTERING = "GRUNN"
+CLUSTERING = "NaiveBayes"
 def createFeatureCSV(db_handler):
     """
         Processes tweets and hashtags to produce the necessary features.
@@ -42,13 +42,16 @@ if __name__ == '__main__':
     if CLUSTERING == "DBSCAN":
         dbscan = DBScan(users=data, eps=0.3, MinPts=5, reduce_dimensions=True)
         labels, NumClusters = dbscan.run()
-
         data["label"] = labels
     elif CLUSTERING == "GRUNN":
         train_data = ioHandler.readFromCSV() # read from features.csv
         grunn = GRUNN(train=train_data, test=data, reduce_dimensions=True)
         labels = grunn.train()
-
+    elif CLUSTERING == "NaiveBayes":
+        train_data = ioHandler.readFromCSV()
+        nB = NaiveBayes(train=train_data, test=data, reduce_dimensions=True)
+        labels = nB.run()
         data["label"] = labels
+
 
 
