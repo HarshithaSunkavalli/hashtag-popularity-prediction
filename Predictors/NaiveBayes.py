@@ -1,13 +1,15 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
+from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
 class NaiveBayes:
 
     F = 25
+    TYPE = "BERNOULLI"
     def __init__(self, train, test, reduce_dimensions=False):
         self.train_data = train
         self.test_data = test
-        labels = self.extractLabels()
+        labels = self.extractLabels(self.train_data)
 
         if reduce_dimensions:
             train_autoencoder = AutoEncoder(self.train_data)
@@ -18,12 +20,12 @@ class NaiveBayes:
 
         self.train_data["label"] = labels
 
-    def extractLabels(self):
+    def extractLabels(self, data):
         """
         assign a label to every hashtag according to 5 popularity buckets
         """
         labels = []
-        for _, row in self.train_data.iterrows():
+        for _, row in data.iterrows():
             if row["popularity"] <= self.F:
                 labels.append(0)
             elif row["popularity"] > self.F and row["popularity"] <= 2*self.F:
@@ -47,3 +49,86 @@ class NaiveBayes:
         # normalize data
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns])
+
+    def gaussian(self):
+
+        self.preprocess(self.train_data)
+
+        gnb = GaussianNB()
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
+        gnb.fit(train, labels)
+
+        y_pred = gnb.predict(train)
+
+        print("GAUSSIAN Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+            .format(
+            train.shape[0],
+            (labels != y_pred).sum(),
+            100 * (1 - (labels != y_pred).sum() / train.shape[0])
+        ))
+
+        test = self.test_data.drop(["hashtag"], axis=1)
+        predictedLabels = gnb.predict(test)
+
+        return predictedLabels
+
+    def bernoulli(self):
+
+        #self.preprocess(self.train_data)
+
+        gnb = BernoulliNB()
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
+        gnb.fit(train, labels)
+
+        y_pred = gnb.predict(train)
+
+        print("BERNOULLI Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+            .format(
+            train.shape[0],
+            (labels != y_pred).sum(),
+            100 * (1 - (labels != y_pred).sum() / train.shape[0])
+        ))
+
+        test = self.test_data.drop(["hashtag"], axis=1)
+        predictedLabels = gnb.predict(test)
+
+        return predictedLabels
+
+    def multinomial(self):
+        #preprocess here is necessary
+        self.preprocess(self.train_data)
+
+        gnb = MultinomialNB()
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
+        gnb.fit(train, labels)
+
+        y_pred = gnb.predict(train)
+
+        print("MULTINOMIAL Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+            .format(
+            train.shape[0],
+            (labels != y_pred).sum(),
+            100 * (1 - (labels != y_pred).sum() / train.shape[0])
+        ))
+
+        test = self.test_data.drop(["hashtag"], axis=1)
+        predictedLabels = gnb.predict(test)
+
+        return predictedLabels
+
+    def run(self):
+
+        if self.TYPE == "GAUSSIAN":
+            labels = self.gaussian()
+        elif self.TYPE == "BERNOULLI":
+            labels = self.bernoulli()
+        else:
+            labels = self.multinomial()
+
+        return labels
+
+
+
