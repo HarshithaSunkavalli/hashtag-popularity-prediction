@@ -1,5 +1,7 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
+from sklearn.neighbors import NearestNeighbors
+from collections import Counter
 
 class KNN:
 
@@ -47,3 +49,31 @@ class KNN:
         # normalize data
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns])
+
+    def run(self, k=2):
+
+        self.preprocess(self.train_data)
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
+
+        test = self.test_data.drop(["hashtag"], axis=1)
+
+        nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(train)
+        distances, indices = nbrs.kneighbors(train)
+
+        y_pred = self.find_predicted_label(indices, labels)
+
+
+        print(
+            "KNN. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+                .format(
+                train.shape[0],
+                (labels != y_pred).sum(),
+                100 * (1 - (labels != y_pred).sum() / train.shape[0])
+            ))
+
+        distances, indices = nbrs.kneighbors(test)
+        predictedLabels = self.find_predicted_label(indices, labels)
+
+        return predictedLabels
+
