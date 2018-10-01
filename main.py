@@ -6,8 +6,10 @@ from FeatureExtractors.IOHandler import IOHandler
 from Predictors.DBScan import DBScan
 from Predictors.GRUNN import GRUNN
 from Predictors.NaiveBayes import NaiveBayes
+from Predictors.KNN import KNN
 
-CLUSTERING = "NaiveBayes"
+CLUSTERING = "KNN"
+
 def createFeatureCSV(db_handler):
     """
         Processes tweets and hashtags to produce the necessary features.
@@ -51,6 +53,11 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         nB = NaiveBayes(train=train_data, test=data, reduce_dimensions=True)
         labels = nB.run()
+        data["label"] = labels
+    elif CLUSTERING == "KNN":
+        train_data = ioHandler.readFromCSV()
+        knn =  KNN(train=train_data, test=data, reduce_dimensions=True)
+        labels = knn.run()
         data["label"] = labels
 
 
