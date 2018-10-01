@@ -77,3 +77,17 @@ class KNN:
 
         return predictedLabels
 
+    def find_predicted_label(self, indices, labels):
+        l = []
+        for index_list in indices:
+            temp_labels = []
+            for index in index_list:
+                temp_labels.append(labels[index])
+
+            counter = Counter(temp_labels)
+            most_common = counter.most_common(1)
+
+            most_common = most_common[0][
+                0]  # counter returns list of tuples. take tuple and take only label without frequency
+            l.append(most_common)
+        return l
