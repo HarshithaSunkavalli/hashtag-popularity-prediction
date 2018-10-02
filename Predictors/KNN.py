@@ -48,7 +48,7 @@ class KNN:
 
         # normalize data
         scaler = preprocessing.MinMaxScaler()
-        data[columns] = scaler.fit_transform(data[columns])
+        data[columns] = scaler.fit_transform(data[columns].astype("float64"))
 
     def run(self, k=2):
 

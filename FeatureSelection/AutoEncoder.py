@@ -25,7 +25,7 @@ class AutoEncoder:
         values = data.values
         #scale data
         scaler = MinMaxScaler()
-        scaled_values = scaler.fit_transform(values)
+        scaled_values = scaler.fit_transform(values.astype("float64"))
 
 
         num_inputs = scaled_values.shape[1]

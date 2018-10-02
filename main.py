@@ -45,7 +45,7 @@ if __name__ == '__main__':
     if CLUSTERING == "DBSCAN":
         dbscan = DBScan(users=data, eps=0.3, MinPts=5, reduce_dimensions=True)
         labels, NumClusters = dbscan.run()
-        data["label"] = labels
+        data.loc[:, "label"] = labels
     elif CLUSTERING == "GRUNN":
         train_data = ioHandler.readFromCSV() # read from features.csv
         grunn = GRUNN(train=train_data, test=data, reduce_dimensions=True)
@@ -54,17 +54,14 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         nB = NaiveBayes(train=train_data, test=data, reduce_dimensions=True)
         labels = nB.run()
-        data["label"] = labels
+        data.loc[:, "label"] = labels
     elif CLUSTERING == "KNN":
         train_data = ioHandler.readFromCSV()
         knn =  KNN(train=train_data, test=data, reduce_dimensions=True)
         labels = knn.run()
-        data["label"] = labels
+        data.loc[:, "label"] = labels
     elif CLUSTERING =="DecisionTree":
         train_data = ioHandler.readFromCSV()
         dTree = DecisionTree(train=train_data, test=data, reduce_dimensions=True)
         labels = dTree.run()
-        data["label"] = labels
-
-
-
+        data.loc[:, "label"] = labels
