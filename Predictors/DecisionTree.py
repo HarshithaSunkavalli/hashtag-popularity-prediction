@@ -50,6 +50,9 @@ class DecisionTree:
         data[columns] = scaler.fit_transform(data[columns])
 
     def run(self):
+        """
+        Implementation of CART decision tree algorithm
+        """
 
         self.preprocess(self.train_data)
         train = self.train_data.drop(["hashtag", "label"], axis=1)
@@ -63,7 +66,7 @@ class DecisionTree:
         y_pred = clf.predict(train)
 
         print(
-            "C4.5. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+            "CART. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
                 .format(
                 train.shape[0],
                 (labels != y_pred).sum(),
