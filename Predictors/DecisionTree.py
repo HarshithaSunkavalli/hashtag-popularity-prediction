@@ -1,5 +1,6 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
+from sklearn import tree
 
 class DecisionTree:
 
@@ -48,5 +49,27 @@ class DecisionTree:
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns])
 
+    def run(self):
 
+        self.preprocess(self.train_data)
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
 
+        test = self.test_data.drop(["hashtag"], axis=1)
+
+        clf = tree.DecisionTreeClassifier()
+        clf = clf.fit(train, labels)
+
+        y_pred = clf.predict(train)
+
+        print(
+            "C4.5. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+                .format(
+                train.shape[0],
+                (labels != y_pred).sum(),
+                100 * (1 - (labels != y_pred).sum() / train.shape[0])
+            ))
+
+        predictedLabels = clf.predict(test)
+
+        return predictedLabels
