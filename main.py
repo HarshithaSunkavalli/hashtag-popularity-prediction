@@ -7,8 +7,9 @@ from Predictors.DBScan import DBScan
 from Predictors.GRUNN import GRUNN
 from Predictors.NaiveBayes import NaiveBayes
 from Predictors.KNN import KNN
+from Predictors.DecisionTree import DecisionTree
 
-CLUSTERING = "KNN"
+CLUSTERING = "DecisionTree"
 
 def createFeatureCSV(db_handler):
     """
@@ -58,6 +59,11 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         knn =  KNN(train=train_data, test=data, reduce_dimensions=True)
         labels = knn.run()
+        data["label"] = labels
+    elif CLUSTERING =="DecisionTree":
+        train_data = ioHandler.readFromCSV()
+        dTree = DecisionTree(train=train_data, test=data, reduce_dimensions=True)
+        labels = dTree.run()
         data["label"] = labels
 
 
