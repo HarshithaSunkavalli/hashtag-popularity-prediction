@@ -2,7 +2,7 @@ from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.linear_model import LogisticRegression
 
-class LogisticRegression:
+class LR:
     F = 25
 
     def __init__(self, train, test, reduce_dimensions=False):
@@ -48,3 +48,31 @@ class LogisticRegression:
         # normalize data
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns].astype("float64"))
+
+    def run(self):
+        """
+        Implementation of Logistic regression algorithm.
+        """
+
+        self.preprocess(self.train_data)
+        train = self.train_data.drop(["hashtag", "label"], axis=1)
+        labels = self.train_data["label"]
+
+        test = self.test_data.drop(["hashtag"], axis=1)
+
+        clf = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial')
+        clf = clf.fit(train, labels)
+
+        y_pred = clf.predict(train)
+
+        print(
+            "Logistic Regression. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
+                .format(
+                train.shape[0],
+                (labels != y_pred).sum(),
+                100 * (1 - (labels != y_pred).sum() / train.shape[0])
+            ))
+
+        predictedLabels = clf.predict(test)
+        print(predictedLabels)
+        return predictedLabels
