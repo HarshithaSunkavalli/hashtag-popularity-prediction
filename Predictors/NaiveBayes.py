@@ -6,10 +6,12 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import TomekLinks
 
 class NaiveBayes:
 
-    F = 25
+    F = 10 #paper uses F = 25 but there is a problem with SMOTE oversampler. label 3 has only 2 samples. min 6.
     TYPE = "BERNOULLI"
     def __init__(self, train, test, reduce_dimensions=False):
         self.train_data = train
@@ -55,37 +57,39 @@ class NaiveBayes:
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns].astype("float64"))
 
+    def oversample(self, train, labels):
+        """
+            Over samples data according to SMOTE algorithm
+        """
+        #Oversample
+        sm = SMOTE(random_state=2)
+        train_res, labels_res = sm.fit_sample(train, labels)
+
+        #clear noise points that emerged from oversampling
+        tl = TomekLinks(random_state=42)
+        train_res, labels_res = tl.fit_sample(train_res, labels_res)
+
+        return train_res, labels_res
+
     def gaussian(self):
 
         self.preprocess(self.train_data)
-
-        gnb = GaussianNB()
         train = self.train_data.drop(["hashtag", "label"], axis=1)
         labels = self.train_data["label"]
-        gnb.fit(train, labels)
 
-        y_pred = gnb.predict(train)
+        # Oversample
+        train_res, labels_res = self.oversample(train, labels)
 
-        f1 = f1_score(labels, y_pred, average="micro")
-        print("Micro-F1 score for Naive Bayes: ", f1)
+        # Prediction model
+        gnb = GaussianNB()
+        gnb.fit(train_res, labels_res)
 
-        label_names = np.unique(labels)
-        # Compute confusion matrix
-        cnf_matrix = confusion_matrix(labels, y_pred)
-        np.set_printoptions(precision=2)
+        y_pred = gnb.predict(train_res)
 
-        # Plot non-normalized confusion matrix
-        plt.figure()
-        self.plot_confusion_matrix(cnf_matrix, classes=label_names,
-                                   title='Confusion matrix, without normalization')
+        # print statistics
+        self.statistics(labels_res, y_pred)
 
-        # Plot normalized confusion matrix
-        # plt.figure()
-        # self.plot_confusion_matrix(cnf_matrix, classes=label_names, normalize=True,
-        #                       title='Normalized confusion matrix')
-
-        plt.show()
-
+        # predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
         predictedLabels = gnb.predict(test)
 
@@ -95,33 +99,21 @@ class NaiveBayes:
 
         #self.preprocess(self.train_data)
 
-        gnb = BernoulliNB()
         train = self.train_data.drop(["hashtag", "label"], axis=1)
         labels = self.train_data["label"]
-        gnb.fit(train, labels)
 
-        y_pred = gnb.predict(train)
+        # Oversample
+        train_res, labels_res = self.oversample(train, labels)
 
-        f1 = f1_score(labels, y_pred, average="micro")
-        print("Micro-F1 score for Naive Bayes: ", f1)
+        gnb = BernoulliNB()
+        gnb.fit(train_res, labels_res)
 
-        label_names = np.unique(labels)
-        # Compute confusion matrix
-        cnf_matrix = confusion_matrix(labels, y_pred)
-        np.set_printoptions(precision=2)
+        y_pred = gnb.predict(train_res)
 
-        # Plot non-normalized confusion matrix
-        plt.figure()
-        self.plot_confusion_matrix(cnf_matrix, classes=label_names,
-                                   title='Confusion matrix, without normalization')
+        # print statistics
+        self.statistics(labels_res, y_pred)
 
-        # Plot normalized confusion matrix
-        # plt.figure()
-        # self.plot_confusion_matrix(cnf_matrix, classes=label_names, normalize=True,
-        #                       title='Normalized confusion matrix')
-
-        plt.show()
-
+        # predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
         predictedLabels = gnb.predict(test)
 
@@ -131,19 +123,37 @@ class NaiveBayes:
         #preprocess here is necessary
         self.preprocess(self.train_data)
 
-        gnb = MultinomialNB()
         train = self.train_data.drop(["hashtag", "label"], axis=1)
         labels = self.train_data["label"]
-        gnb.fit(train, labels)
 
-        y_pred = gnb.predict(train)
+        # Oversample
+        train_res, labels_res = self.oversample(train, labels)
 
-        f1 = f1_score(labels, y_pred, average="micro")
+        gnb = BernoulliNB()
+        gnb.fit(train_res, labels_res)
+
+        y_pred = gnb.predict(train_res)
+
+        # print statistics
+        self.statistics(labels_res, y_pred)
+
+        # predict labels
+        test = self.test_data.drop(["hashtag"], axis=1)
+        predictedLabels = gnb.predict(test)
+
+        return predictedLabels
+
+    def statistics(self, labels_res, y_pred):
+        """
+        Prints micro f1 score and confusion matrix
+        """
+
+        f1 = f1_score(labels_res, y_pred, average="micro")
         print("Micro-F1 score for Naive Bayes: ", f1)
 
-        label_names = np.unique(labels)
+        label_names = np.unique(labels_res)
         # Compute confusion matrix
-        cnf_matrix = confusion_matrix(labels, y_pred)
+        cnf_matrix = confusion_matrix(labels_res, y_pred)
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
@@ -157,11 +167,6 @@ class NaiveBayes:
         #                       title='Normalized confusion matrix')
 
         plt.show()
-
-        test = self.test_data.drop(["hashtag"], axis=1)
-        predictedLabels = gnb.predict(test)
-
-        return predictedLabels
 
     def run(self):
 

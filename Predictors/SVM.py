@@ -103,7 +103,7 @@ class SVM:
         """
 
         f1 = f1_score(labels_res, y_pred, average="micro")
-        print("Micro-F1 score for Logistic Regression: ", f1)
+        print("Micro-F1 score for SVM: ", f1)
 
         label_names = np.unique(labels_res)
         # Compute confusion matrix
