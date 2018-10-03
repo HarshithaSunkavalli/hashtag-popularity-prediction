@@ -6,9 +6,11 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import TomekLinks
 
 class LR:
-    F = 25
+    F = 10 #paper uses F = 25 but there is a problem with SMOTE oversampler. label 3 has only 2 samples. min 6.
 
     def __init__(self, train, test, reduce_dimensions=False):
         self.train_data = train
@@ -54,28 +56,59 @@ class LR:
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns].astype("float64"))
 
+    def oversample(self, train, labels):
+        """
+            Over samples data according to SMOTE algorithm
+        """
+        #Oversample
+        sm = SMOTE(random_state=2)
+        train_res, labels_res = sm.fit_sample(train, labels)
+
+        #clear noise points that emerged from oversampling
+        tl = TomekLinks(random_state=42)
+        train_res, labels_res = tl.fit_sample(train_res, labels_res)
+
+        return train_res, labels_res
+
     def run(self):
         """
         Implementation of Logistic regression algorithm.
         """
 
         self.preprocess(self.train_data)
+
         train = self.train_data.drop(["hashtag", "label"], axis=1)
         labels = self.train_data["label"]
 
+        #Oversample
+        train_res, labels_res = self.oversample(train, labels)
+
+        #Prediction model
+        clf = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial', max_iter=1000)
+        clf = clf.fit(train_res, labels_res)
+
+        y_pred = clf.predict(train_res)
+
+        #print statistics
+        self.statistics(labels_res, y_pred)
+
+        #predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
+        predictedLabels = clf.predict(test)
 
-        clf = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial')
-        clf = clf.fit(train, labels)
+        return predictedLabels
 
-        y_pred = clf.predict(train)
+    def statistics(self, labels_res, y_pred):
+        """
+        Prints micro f1 score and confusion matrix
+        """
 
-        f1 = f1_score(labels, y_pred, average="micro")
+        f1 = f1_score(labels_res, y_pred, average="micro")
         print("Micro-F1 score for Logistic Regression: ", f1)
 
-        label_names = np.unique(labels)
+        label_names = np.unique(labels_res)
         # Compute confusion matrix
-        cnf_matrix = confusion_matrix(labels, y_pred)
+        cnf_matrix = confusion_matrix(labels_res, y_pred)
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
@@ -89,10 +122,6 @@ class LR:
         #                       title='Normalized confusion matrix')
 
         plt.show()
-
-        predictedLabels = clf.predict(test)
-
-        return predictedLabels
 
     def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         """
