@@ -9,8 +9,9 @@ from Predictors.NaiveBayes import NaiveBayes
 from Predictors.KNN import KNN
 from Predictors.DecisionTree import DecisionTree
 from Predictors.SVM import SVM
+from Predictors.LR import LR
 
-CLUSTERING = "SVM"
+CLUSTERING = "LR"
 
 def createFeatureCSV(db_handler):
     """
@@ -70,4 +71,9 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         svm = SVM(train=train_data, test=data, reduce_dimensions=False)
         labels = svm.run()
+        data.loc[:, "label"] = labels
+    elif CLUSTERING =="LR":
+        train_data = ioHandler.readFromCSV()
+        lr = LR(train=train_data, test=data, reduce_dimensions=False)
+        labels = lr.run()
         data.loc[:, "label"] = labels
