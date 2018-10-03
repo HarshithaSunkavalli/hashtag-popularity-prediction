@@ -7,10 +7,11 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import TomekLinks
 
 class KNN:
-
-    F = 25
+    F = 10  # paper uses F = 25 but there is a problem with SMOTE oversampler. label 3 has only 2 samples. min 6.
     def __init__(self, train, test, reduce_dimensions=False):
         self.train_data = train
         self.test_data = test
@@ -55,41 +56,42 @@ class KNN:
         scaler = preprocessing.MinMaxScaler()
         data[columns] = scaler.fit_transform(data[columns].astype("float64"))
 
+    def oversample(self, train, labels):
+        """
+            Over samples data according to SMOTE algorithm
+        """
+        #Oversample
+        sm = SMOTE(random_state=2)
+        train_res, labels_res = sm.fit_sample(train, labels)
+
+        #clear noise points that emerged from oversampling
+        tl = TomekLinks(random_state=42)
+        train_res, labels_res = tl.fit_sample(train_res, labels_res)
+
+        return train_res, labels_res
+
     def run(self, k=2):
 
         self.preprocess(self.train_data)
         train = self.train_data.drop(["hashtag", "label"], axis=1)
         labels = self.train_data["label"]
 
+        #Oversample
+        train_res, labels_res = self.oversample(train, labels)
+
+        # Prediction model
+        nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(train_res)
+        distances, indices = nbrs.kneighbors(train_res)
+
+        y_pred = self.find_predicted_label(indices, labels_res)
+
+        # print statistics
+        self.statistics(labels_res, y_pred)
+
+        # predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
-
-        nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(train)
-        distances, indices = nbrs.kneighbors(train)
-
-        y_pred = self.find_predicted_label(indices, labels)
-
-        f1 = f1_score(labels, y_pred, average="micro")
-        print("Micro-F1 score for k nearest neighbors: ", f1)
-
-        label_names = np.unique(labels)
-        # Compute confusion matrix
-        cnf_matrix = confusion_matrix(labels, y_pred)
-        np.set_printoptions(precision=2)
-
-        # Plot non-normalized confusion matrix
-        plt.figure()
-        self.plot_confusion_matrix(cnf_matrix, classes=label_names,
-                                   title='Confusion matrix, without normalization')
-
-        # Plot normalized confusion matrix
-        # plt.figure()
-        # self.plot_confusion_matrix(cnf_matrix, classes=label_names, normalize=True,
-        #                       title='Normalized confusion matrix')
-
-        plt.show()
-
         distances, indices = nbrs.kneighbors(test)
-        predictedLabels = self.find_predicted_label(indices, labels)
+        predictedLabels = self.find_predicted_label(indices, labels_res)
 
         return predictedLabels
 
@@ -107,6 +109,31 @@ class KNN:
                 0]  # counter returns list of tuples. take tuple and take only label without frequency
             l.append(most_common)
         return l
+
+    def statistics(self, labels_res, y_pred):
+        """
+        Prints micro f1 score and confusion matrix
+        """
+
+        f1 = f1_score(labels_res, y_pred, average="micro")
+        print("Micro-F1 score for K Nearest Neighbors: ", f1)
+
+        label_names = np.unique(labels_res)
+        # Compute confusion matrix
+        cnf_matrix = confusion_matrix(labels_res, y_pred)
+        np.set_printoptions(precision=2)
+
+        # Plot non-normalized confusion matrix
+        plt.figure()
+        self.plot_confusion_matrix(cnf_matrix, classes=label_names,
+                                   title='Confusion matrix, without normalization')
+
+        # Plot normalized confusion matrix
+        # plt.figure()
+        # self.plot_confusion_matrix(cnf_matrix, classes=label_names, normalize=True,
+        #                       title='Normalized confusion matrix')
+
+        plt.show()
 
     def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         """
