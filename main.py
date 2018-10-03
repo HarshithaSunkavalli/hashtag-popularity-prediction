@@ -12,7 +12,7 @@ from Predictors.SVM import SVM
 from Predictors.LR import LR
 from Predictors.RandomPredictor import RandomPredictor
 
-CLUSTERING = "LR"
+CLUSTERING = "SVM"
 
 def createFeatureCSV(db_handler):
     """
