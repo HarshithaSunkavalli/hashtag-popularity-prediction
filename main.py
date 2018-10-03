@@ -77,3 +77,5 @@ if __name__ == '__main__':
         lr = LR(train=train_data, test=data, reduce_dimensions=False)
         labels = lr.run()
         data.loc[:, "label"] = labels
+    else:
+        pass
