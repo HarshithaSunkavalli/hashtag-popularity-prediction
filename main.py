@@ -10,8 +10,9 @@ from Predictors.KNN import KNN
 from Predictors.DecisionTree import DecisionTree
 from Predictors.SVM import SVM
 from Predictors.LR import LR
+from Predictors.RandomPredictor import RandomPredictor
 
-CLUSTERING = "LR"
+CLUSTERING = "Random"
 
 def createFeatureCSV(db_handler):
     """
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     elif CLUSTERING == "KNN":
         train_data = ioHandler.readFromCSV()
         knn =  KNN(train=train_data, test=data, reduce_dimensions=True)
-        labels = knn.run()
+        labels = knn.run(k=3)
         data.loc[:, "label"] = labels
     elif CLUSTERING =="DecisionTree":
         train_data = ioHandler.readFromCSV()
@@ -76,6 +77,11 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         lr = LR(train=train_data, test=data, reduce_dimensions=False)
         labels = lr.run()
+        data.loc[:, "label"] = labels
+    elif CLUSTERING =="Random":
+        train_data = ioHandler.readFromCSV()
+        rp = RandomPredictor(train=train_data, test=data, reduce_dimensions=False)
+        labels = rp.run()
         data.loc[:, "label"] = labels
     else:
         pass
