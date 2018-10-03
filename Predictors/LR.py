@@ -74,5 +74,5 @@ class LR:
             ))
 
         predictedLabels = clf.predict(test)
-        print(predictedLabels)
+
         return predictedLabels
