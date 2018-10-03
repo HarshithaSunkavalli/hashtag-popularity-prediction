@@ -1,6 +1,7 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
 
 class LR:
     F = 25
@@ -65,13 +66,8 @@ class LR:
 
         y_pred = clf.predict(train)
 
-        print(
-            "Logistic Regression. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
-                .format(
-                train.shape[0],
-                (labels != y_pred).sum(),
-                100 * (1 - (labels != y_pred).sum() / train.shape[0])
-            ))
+        f1 = f1_score(labels, y_pred, average="micro")
+        print("Micro-F1 score for Logistic Regression: ", f1)
 
         predictedLabels = clf.predict(test)
 

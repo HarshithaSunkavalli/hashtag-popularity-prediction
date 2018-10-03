@@ -2,6 +2,7 @@ from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.neighbors import NearestNeighbors
 from collections import Counter
+from sklearn.metrics import f1_score
 
 class KNN:
 
@@ -63,14 +64,8 @@ class KNN:
 
         y_pred = self.find_predicted_label(indices, labels)
 
-
-        print(
-            "KNN. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
-                .format(
-                train.shape[0],
-                (labels != y_pred).sum(),
-                100 * (1 - (labels != y_pred).sum() / train.shape[0])
-            ))
+        f1 = f1_score(labels, y_pred, average="micro")
+        print("Micro-F1 score for k nearest neighbors: ", f1)
 
         distances, indices = nbrs.kneighbors(test)
         predictedLabels = self.find_predicted_label(indices, labels)

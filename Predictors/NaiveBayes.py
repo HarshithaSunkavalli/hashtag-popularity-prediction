@@ -1,6 +1,7 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.metrics import f1_score
 
 class NaiveBayes:
 
@@ -107,12 +108,8 @@ class NaiveBayes:
 
         y_pred = gnb.predict(train)
 
-        print("MULTINOMIAL Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
-            .format(
-            train.shape[0],
-            (labels != y_pred).sum(),
-            100 * (1 - (labels != y_pred).sum() / train.shape[0])
-        ))
+        f1 = f1_score(labels, y_pred, average="micro")
+        print("Micro-F1 score for Naive Bayes: ", f1)
 
         test = self.test_data.drop(["hashtag"], axis=1)
         predictedLabels = gnb.predict(test)

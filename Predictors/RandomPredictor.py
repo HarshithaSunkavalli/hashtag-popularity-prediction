@@ -1,5 +1,7 @@
 from sklearn import preprocessing
 from FeatureSelection.AutoEncoder import AutoEncoder
+from sklearn.metrics import f1_score
+from sklearn.metrics import confusion_matrix
 import random
 
 class RandomPredictor:
@@ -59,18 +61,11 @@ class RandomPredictor:
         labels = self.train_data["label"]
 
         test = self.test_data.drop(["hashtag"], axis=1)
+        y_pred = [random.choice(labels) for _ in range(len(labels))]
 
-        for i in range(100):
-            y_pred = [random.choice(labels) for _ in labels]
+        f1 = f1_score(labels, y_pred, average="micro")
+        print("Micro-F1 score for Random Predictor: ", f1)
 
-            print(
-            "Random. Number of mislabeled points out of a total {} points : {}, performance {:05.2f}% on train set"
-                .format(
-                train.shape[0],
-                (labels != y_pred).sum(),
-                100 * (1 - (labels != y_pred).sum() / train.shape[0])
-            ))
-
-        predictedLabels = [random.choice(labels) for _ in test]
+        predictedLabels = [random.choice(labels) for _ in range(len(test))]
 
         return predictedLabels
