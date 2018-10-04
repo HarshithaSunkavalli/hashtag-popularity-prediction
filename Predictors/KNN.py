@@ -120,7 +120,6 @@ class KNN:
         cross_validation = True
         if cross_validation:
             f1 = self.cross_validation(train_res, labels_res, k, cv=10, scoring='micro')  # list with cv=10 elements in it
-            print(f1)
             f1 = max(f1)
             print("Best Micro-F1 score for 10-fold cross validation on SVM: ", f1)
         else:
