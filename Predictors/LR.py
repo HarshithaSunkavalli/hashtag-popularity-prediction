@@ -3,6 +3,7 @@ from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import cross_val_score
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
@@ -90,7 +91,7 @@ class LR:
         y_pred = clf.predict(train_res)
 
         #print statistics
-        self.statistics(labels_res, y_pred)
+        self.statistics(clf, train_res, labels_res, y_pred)
 
         #predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
@@ -98,13 +99,20 @@ class LR:
 
         return predictedLabels
 
-    def statistics(self, labels_res, y_pred):
+    def statistics(self, clf, train_res, labels_res, y_pred):
         """
         Prints micro f1 score and confusion matrix
         """
 
-        f1 = f1_score(labels_res, y_pred, average="micro")
-        print("Micro-F1 score for Logistic Regression: ", f1)
+        cross_validation = True
+        if cross_validation:
+            f1 = cross_val_score(clf, train_res, labels_res, cv=10,
+                                 scoring='f1_micro')  # list with cv=10 elements in it
+            f1 = max(f1)
+            print("Best Micro-F1 score for 10-fold cross validation on Logistic Regression: ", f1)
+        else:
+            f1 = f1_score(labels_res, y_pred, average="micro")
+            print("Micro-F1 score for Logistic Regression: ", f1)
 
         label_names = np.unique(labels_res)
         # Compute confusion matrix
