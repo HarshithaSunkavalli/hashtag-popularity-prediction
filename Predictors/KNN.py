@@ -3,10 +3,12 @@ from FeatureSelection.AutoEncoder import AutoEncoder
 from sklearn.neighbors import NearestNeighbors
 from collections import Counter
 from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
+import random
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import TomekLinks
 
@@ -80,13 +82,14 @@ class KNN:
         train_res, labels_res = self.oversample(train, labels)
 
         # Prediction model
-        nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(train_res)
+        nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree')
+        nbrs = nbrs.fit(train_res)
         distances, indices = nbrs.kneighbors(train_res)
 
         y_pred = self.find_predicted_label(indices, labels_res)
 
         # print statistics
-        self.statistics(labels_res, y_pred)
+        self.statistics(train_res, labels_res, y_pred, k)
 
         # predict labels
         test = self.test_data.drop(["hashtag"], axis=1)
@@ -110,13 +113,19 @@ class KNN:
             l.append(most_common)
         return l
 
-    def statistics(self, labels_res, y_pred):
+    def statistics(self, train_res, labels_res, y_pred, k):
         """
         Prints micro f1 score and confusion matrix
         """
-
-        f1 = f1_score(labels_res, y_pred, average="micro")
-        print("Micro-F1 score for K Nearest Neighbors: ", f1)
+        cross_validation = True
+        if cross_validation:
+            f1 = self.cross_validation(train_res, labels_res, k, cv=10, scoring='micro')  # list with cv=10 elements in it
+            print(f1)
+            f1 = max(f1)
+            print("Best Micro-F1 score for 10-fold cross validation on SVM: ", f1)
+        else:
+            f1 = f1_score(labels_res, y_pred, average="micro")
+            print("Micro-F1 score for K Nearest Neighbors: ", f1)
 
         label_names = np.unique(labels_res)
         # Compute confusion matrix
@@ -134,6 +143,33 @@ class KNN:
         #                       title='Normalized confusion matrix')
 
         plt.show()
+
+    def cross_validation(self, train_res, labels_res, k, cv=10, scoring='micro'):
+        """
+            Manual cross validation.
+            Split data in train and test.
+            Predict labels according to nearest neighbors.
+            Find f1 score.
+            Shuffle data for next k-fold validation.
+        """
+        l = []
+        for i in range(cv):
+            train, test, labels_train, labels_test = train_test_split(train_res, labels_res, test_size= 1/cv, random_state=42)
+            nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree')
+            nbrs = nbrs.fit(train)
+
+            distances, indices = nbrs.kneighbors(test)
+
+            y_pred = self.find_predicted_label(indices, labels_train)
+            f1 = f1_score(labels_test, y_pred, average=scoring)
+            l.append(f1)
+
+            #shuffle train data
+            temp_list = list(zip(train_res, labels_res))
+            random.shuffle(temp_list)
+            train_res, labels_res = zip(*temp_list)
+
+        return l
 
     def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         """
