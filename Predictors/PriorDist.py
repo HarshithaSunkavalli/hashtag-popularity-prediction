@@ -57,7 +57,9 @@ class PriorDist:
 
     def run(self):
         """
-            Implementation of PriorDist algorithm. This algorithm does not need oversampling, as it alters its logic
+            No cross validation as long as it is a baseline approach
+            Implementation of PriorDist algorithm.
+            This algorithm does not need oversampling, as it alters its logic
         """
 
         # self.preprocess(self.train_data)

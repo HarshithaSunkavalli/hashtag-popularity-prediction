@@ -95,6 +95,7 @@ class RandomPredictor:
 
     def statistics(self, labels_res, y_pred):
         """
+        No cross validation as long as it is a baseline approach
         Prints micro f1 score and confusion matrix
         """
 

@@ -13,7 +13,7 @@ from Predictors.LR import LR
 from Predictors.RandomPredictor import RandomPredictor
 from Predictors.PriorDist import PriorDist
 
-CLUSTERING = "SVM"
+CLUSTERING = "KNN"
 
 def createFeatureCSV(db_handler):
     """
