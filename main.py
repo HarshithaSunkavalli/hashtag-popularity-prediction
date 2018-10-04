@@ -11,8 +11,9 @@ from Predictors.DecisionTree import DecisionTree
 from Predictors.SVM import SVM
 from Predictors.LR import LR
 from Predictors.RandomPredictor import RandomPredictor
+from Predictors.PriorDist import PriorDist
 
-CLUSTERING = "Random"
+CLUSTERING = "SVM"
 
 def createFeatureCSV(db_handler):
     """
@@ -82,6 +83,11 @@ if __name__ == '__main__':
         train_data = ioHandler.readFromCSV()
         rp = RandomPredictor(train=train_data, test=data, reduce_dimensions=False)
         labels = rp.run()
+        data.loc[:, "label"] = labels
+    elif CLUSTERING =="PriorDist":
+        train_data = ioHandler.readFromCSV()
+        pd = PriorDist(train=train_data, test=data, reduce_dimensions=False)
+        labels = pd.run()
         data.loc[:, "label"] = labels
     else:
         pass
