@@ -67,12 +67,8 @@ class FeatureExtractor:
         top_k = [h[0] for h in top_k]
 
         tweets_to_return = []
-        for tweetId, hashtagList in tweet_hashtag_map.items():
-            tweet = self.dbHandler.getTweetById(tweetId)
-            for hashtag in hashtagList:
-                if hashtag["text"] in top_k:
-                    tweets_to_return.append(tweet)
-                    break
+        for hashtag in top_k:
+            tweets_to_return.extend(self.dbHandler.getTweetsForHashtag(hashtag))
 
         return  tweets_to_return, top_k
 
