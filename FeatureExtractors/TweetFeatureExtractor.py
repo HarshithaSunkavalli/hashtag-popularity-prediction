@@ -121,6 +121,7 @@ class TweetFeatureExtractor(FeatureExtractor):
             skip += chunk_size
 
             divergence = self.get_divergence_for_chunk(text, hashtag_text)
+            print(divergence)
             hashtag_clarity.append(divergence)
 
         return np.asarray(hashtag_clarity).mean()
@@ -128,32 +129,20 @@ class TweetFeatureExtractor(FeatureExtractor):
     def get_divergence_for_chunk(self, text, hashtag_text):
         # calculate word frequencies
         tweet_dict = self.textToFreqDict(text)
-        tweet_keys_sorted = sorted(tweet_dict)
-        tweet_list = [tweet_dict[key] for key in tweet_keys_sorted]
-        tweet_list = [value / len(tweet_list) for value in tweet_list]
+        tweet_keys = list(tweet_dict.keys())
+        tweet_list = (value / len(tweet_dict) for value in tweet_dict.values()) # () creates generator for ram efficiency
 
         word_dict = self.textToFreqDict(hashtag_text)
-        # keep original length as long as it is going to change
-        length = len(word_dict.keys())
-
-        # populate word_dict so as to contain every word that tweet_dict contains
-        for word in tweet_keys_sorted:
-            if word not in word_dict.keys():
-                word_dict.update({word: 0})
-
-        # words in word_list are in the same order as words in tweet_list
-        word_list = [word_dict[key] for key in tweet_keys_sorted]
-        word_list = [value / length for value in word_list]
+        word_list = (word_dict[key] / len(word_dict) if key in word_dict.keys() else 0 for key in tweet_keys)
 
         return self.KL(word_list, tweet_list)
 
     def KL(self, a, b):
-        a = np.asarray(a, dtype=np.float)
-        b = np.asarray(b, dtype=np.float)
+
         summary = 0
-        for index, el in enumerate(a):
-            if el != 0:
-                summary += el * np.log(el/b[index])
+        for x, y in zip(a, b):
+            if x != 0:
+                summary += x * np.log(x/y)
 
         return summary#np.sum(np.where(a != 0, a * np.log(a / b), 0))
 
