@@ -1,4 +1,4 @@
-from .FeatureExtractor import FeatureExtractor
+from FeatureExtractors.FeatureExtractor import FeatureExtractor
 import numpy as np
 import re
 import time

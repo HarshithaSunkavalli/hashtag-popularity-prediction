@@ -1,11 +1,11 @@
-from .FeatureExtractor import FeatureExtractor
+from FeatureExtractors.FeatureExtractor import FeatureExtractor
 import numpy as np
 import LDA
 import gc
 
 class TweetFeatureExtractor(FeatureExtractor):
 
-    CHUNK_SIZE = 100
+    CHUNK_SIZE = 1000
     def get_tweet_features(self, hashtag):
         """
             stores the tweet related features
@@ -18,16 +18,16 @@ class TweetFeatureExtractor(FeatureExtractor):
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
         #ratio features
         self.total_tweets = self.dbHandler.getNumOfTweets()
-        print("Extracting tweet ratio")
-        tweet_features["tweet_ratio"] = self.get_tweet_ratio()
-        print("Extracting author ratio")
-        tweet_features["author_ratio"] = self.get_author_ratio()
-        print("Extracting retweet ratio")
-        tweet_features["retweet_ratio"] = self.get_retweet_ratio()
-        print("Extracting mention ratio")
-        tweet_features["mention_ratio"] = self.get_mention_ratio()
-        print("Extracting url ratio")
-        tweet_features["url_ratio"] = self.get_url_ratio()
+        # print("Extracting tweet ratio")
+        # tweet_features["tweet_ratio"] = self.get_tweet_ratio()
+        # print("Extracting author ratio")
+        # tweet_features["author_ratio"] = self.get_author_ratio()
+        # print("Extracting retweet ratio")
+        # tweet_features["retweet_ratio"] = self.get_retweet_ratio()
+        # print("Extracting mention ratio")
+        # tweet_features["mention_ratio"] = self.get_mention_ratio()
+        # print("Extracting url ratio")
+        # tweet_features["url_ratio"] = self.get_url_ratio()
         #topic feature
         #tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
@@ -120,34 +120,32 @@ class TweetFeatureExtractor(FeatureExtractor):
             text = self.dbHandler.getTweetTexts(chunk_size, skip=skip)
             skip += chunk_size
 
-            # split text to words
-            tweet_text_list = text.split()
-            hashtag_text_list = hashtag_text.split()
-            #calculate word frequencies
-            tweet_dict = self.wordListToFreqDict(tweet_text_list)
-            tweet_keys_sorted = sorted(tweet_dict)
-            tweet_list = [tweet_dict[key] for key in tweet_keys_sorted]
-            tweet_list = [value / len(tweet_list) for value in tweet_list]
-
-
-            word_dict = self.wordListToFreqDict(hashtag_text_list)
-            # keep original length as long as it is going to change
-            length = len(word_dict.keys())
-
-            # populate word_dict so as to contain every word that tweet_dict contains
-            for word in tweet_keys_sorted:
-                if word not in word_dict.keys():
-                    word_dict.update({word: 0})
-
-            # words in word_list are in the same order as words in tweet_list
-            word_list = [word_dict[key] for key in tweet_keys_sorted]
-            word_list = [value / length for value in word_list]
-
-            hashtag_clarity.append(self.KL(word_list, tweet_list))
-
-            gc.collect() #free uneccessary space
+            divergence = self.get_divergence_for_chunk(text, hashtag_text)
+            hashtag_clarity.append(divergence)
 
         return np.asarray(hashtag_clarity).mean()
+
+    def get_divergence_for_chunk(self, text, hashtag_text):
+        # calculate word frequencies
+        tweet_dict = self.textToFreqDict(text)
+        tweet_keys_sorted = sorted(tweet_dict)
+        tweet_list = [tweet_dict[key] for key in tweet_keys_sorted]
+        tweet_list = [value / len(tweet_list) for value in tweet_list]
+
+        word_dict = self.textToFreqDict(hashtag_text)
+        # keep original length as long as it is going to change
+        length = len(word_dict.keys())
+
+        # populate word_dict so as to contain every word that tweet_dict contains
+        for word in tweet_keys_sorted:
+            if word not in word_dict.keys():
+                word_dict.update({word: 0})
+
+        # words in word_list are in the same order as words in tweet_list
+        word_list = [word_dict[key] for key in tweet_keys_sorted]
+        word_list = [value / length for value in word_list]
+
+        return self.KL(word_list, tweet_list)
 
     def KL(self, a, b):
         a = np.asarray(a, dtype=np.float)
@@ -159,8 +157,8 @@ class TweetFeatureExtractor(FeatureExtractor):
 
         return summary#np.sum(np.where(a != 0, a * np.log(a / b), 0))
 
-    def wordListToFreqDict(self, wordlist):
-        wordlist = np.asarray(wordlist)
+    def textToFreqDict(self, text):
+        wordlist = np.asarray(text.split())
         unique, counts = np.unique(wordlist, return_counts=True)
         return dict(zip(unique, counts))
 
