@@ -3,6 +3,7 @@ import re
 import itertools
 import operator
 from collections import Counter
+from FeatureExtractors.IOHandler import IOHandler
 
 class FeatureExtractor:
 
@@ -15,91 +16,20 @@ class FeatureExtractor:
     K = 10
     TWEETS_TO_FETCH = 10000
 
-    def __init__(self, dbHandler, k=False):
-        self.dbHandler = dbHandler
-        self.tweet_hashtag_map = {}
+    def __init__(self, dbHandler=None, featureExtractor=None):
 
-        if not k:
-            self.tweets = self.dbHandler.getTweetsByNum(40)
+        if featureExtractor:
+            self.dbHandler = featureExtractor.dbHandler
+            self.tweets = featureExtractor.tweets
         else:
-            self.tweets = self.dbHandler.getTweetsFromTopK()#contains tweets for top 10 hashtags
-
-        #run once to create collection
-        #self.tweets, self.hashtags = self.__get_tweets_for_top_k_hashtags(self.K)
-        #self.dbHandler.storeTopKTweets()
-
-        self.hashtags = self.__get_hashtags()
-        self.__sanitize_map()
-
-    def __sanitize_map(self):
-        """
-        keep only top k hashtags
-        self.hashtags already contain top k hashtags. But the map itself contains every hashtag that exists in each tweet.
-        """
-        for tweetId, hashtagList in self.tweet_hashtag_map.items():
-            sanitized_hashtags = []
-            for hashtag in hashtagList:
-                if hashtag in self.hashtags:
-                    sanitized_hashtags.append(hashtag)
-            self.tweet_hashtag_map[tweetId] = sanitized_hashtags
-
-    def __get_tweets_for_top_k_hashtags(self, k):
-        """
-        :param k: number of top hashtags
-        :return: the tweets containing only top k hashtags
-        """
-        if k==0:
+            self.dbHandler = dbHandler
             self.tweets = []
-            return
 
+            #run once to create collection
+            #self.tweets, self.hashtags = self.__get_tweets_for_top_k_hashtags(self.K)
+            #self.dbHandler.storeTopKTweets()
 
-        tweets = self.dbHandler.getTweetsByNum(self.TWEETS_TO_FETCH)
-
-        hashtags = []
-        tweet_hashtag_map = {}
-        for tweet in tweets:
-            tweetHashtags = self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
-            tweetHashtags = [h["text"] for h in tweetHashtags]
-            hashtags.extend(tweetHashtags)
-
-        counter = Counter(hashtags)
-        top_k = counter.most_common(k)#returns tuples of (hashtag, frequency)
-        top_k = [h[0] for h in top_k]
-
-        tweets_to_return = []
-        for hashtag in top_k:
-            tweets_to_return.extend(self.dbHandler.getTweetsForHashtag(hashtag))
-
-        return  tweets_to_return, top_k
-
-    def __get_hashtags(self):
-        """
-            Private method used to extract hashtags from the given tweets.
-            self.tweet_hashtag_map: {'994633657141813248': [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}], '54691802283900928': [{'text': 'PGP', 'indices': [130, 134]}]}
-            where key is the tweet id and value is a list of containing hashtags
-            self.hashtags: [{'text': 'documentation', 'indices': [211, 225]}, {'text': 'parsingJSON', 'indices': [226, 238]}] and hashtags exist only once.
-        """
-
-        tweet_hashtag_map = {}
-        hashtags = []
-        for tweet in self.tweets:
-            tweetHashtags = self.__get_hashtags_from_tweet(tweet, tweet_hashtag_map)
-            for hashtag in tweetHashtags:
-                if hashtag not in hashtags:#keep only a unique hashtag appearance
-                    hashtags.append(hashtag)
-
-        hashtag_text = [hashtag["text"] for hashtag in hashtags]
-        counter = Counter(hashtag_text)
-        top_k = counter.most_common(self.K)  # returns tuples of (hashtag, frequency)
-        top_k = [h[0] for h in top_k]
-
-        returned_hashtags = [ hashtag for hashtag in hashtags if hashtag["text"] in top_k]
-
-        self.tweet_hashtag_map = tweet_hashtag_map
-
-        return returned_hashtags
-
-    def __get_hashtags_from_tweet(self, tweet, tweet_hashtag_map=None):
+    def get_hashtags_from_tweet(self, tweet):
         """
             Private method used to extract hashtags from the given tweet.
             :return: the hashtags
@@ -128,9 +58,6 @@ class FeatureExtractor:
                 hashtags.extend(retweeted_potential_hashtags)
         else:
             pass
-
-        if tweet_hashtag_map is not None:
-            tweet_hashtag_map[tweet["id_str"]] = hashtags
 
         return hashtags
 

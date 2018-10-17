@@ -9,254 +9,52 @@ class HashtagFeatureExtractor(FeatureExtractor):
     __COOCCURANCE_THRESHOLD = 0.4
     __LOCATION_THRESHOLD = 0.25
 
-    def get_hashtag_features(self):
+    def get_hashtag_features(self, hashtag):
         """
-            returns the hashtag related features
+            stores the hashtag related features
         """
+        self.hashtag = hashtag
+        self.tweets = self.dbHandler.getTweetsForHashtag(self.hashtag)
 
         hashtag_features = {}
         # char length feature
-        hashtag_features["char_length"] = self.__get_hashtags_length()
+        print("Extracting char length")
+        hashtag_features["char_length"] = self.get_hashtags_length()
         # orthography related features
-        hashtag_features["contains_digits"] = self.__get_hashtags_contain_digits()
-        hashtag_features["all_caps"] = self.__get_hashtags_all_caps()
-        hashtag_features["any_caps"] = self.__get_hashtags_any_caps()
-        hashtag_features["no_caps"] = self.__get_hashtags_no_caps()
-        hashtag_features["special_signals"] = self.__get_hashtags_special_signals()
+        print("Extracting orthography")
+        hashtag_features["contains_digits"] = self.get_hashtags_contain_digits()
+        hashtag_features["all_caps"] = self.get_hashtags_all_caps()
+        hashtag_features["any_caps"] = self.get_hashtags_any_caps()
+        hashtag_features["no_caps"] = self.get_hashtags_no_caps()
+        hashtag_features["special_signals"] = self.get_hashtags_special_signals()
         # co-occurance feature
-        hashtag_features["cooccurance"] = self.__get_hashtags_cooccurance()
+        print("Extracting co-occurance")
+        hashtag_features["cooccurance"] = self.get_hashtags_cooccurance()
         # location feature
-        hashtag_features["location"] = self.__get_hashtags_location()
+        print("Extracting location")
+        hashtag_features["location"] = self.get_hashtags_location()
         # hashtag sentiment feature
-        hashtag_features["hashtag_sentiment"] = self.__get_hashtag_sentiment()
+        print("Extracting sentiment")
+        hashtag_features["hashtag_sentiment"] = self.get_hashtag_sentiment()
         # hashtag popularity feature
-        hashtag_features["popularity"] = self.__get_hashtag_popularity()
+        print("Extracting popularity")
+        hashtag_features["popularity"] = self.get_hashtag_popularity()
         # hashtag time series features
-        hashtag_features["created_at"], hashtag_features["lifespan"] = self.__get_hashtags_created_at_and_lifespan()
+        print("Extracting creation time and lifespan")
+        hashtag_features["created_at"], hashtag_features["lifespan"] = self.get_hashtags_created_at_and_lifespan()
 
         return hashtag_features
 
-    def __get_hashtag_popularity(self):
-        """
-        :return: a dictionary of (hashtag, ratio) attributes.
-        """
-        hashtag_tweet_map = self.__get_tweets_for_hashtags()
 
-        hashtag_popularity = {}
-        for hashtag in self.hashtags:
-            hashtag_popularity[hashtag["text"]] = 0
-
-        hashtag_popularity = {hashtag: len(tweetList) for hashtag, tweetList in hashtag_tweet_map.items()}
-
-        return hashtag_popularity
-
-    def __get_tweets_for_hashtags(self):
-        """
-        :return: a dictionary of (hashtag, [tweets]) attributes
-        """
-
-        hashtag_tweet_map = {}
-        for hashtag in self.hashtags:
-            hashtag_tweet_map[hashtag["text"]] = []
-
-        for hashtag in self.hashtags:
-            tweets = self.dbHandler.getTweetsForHashtag(hashtag["text"])
-            hashtag_tweet_map[hashtag["text"]].extend(tweets)
-
-        return hashtag_tweet_map
-
-    def __get_hashtags_location(self):
-        """
-            finds the location of each hashtag inside the corresponding tweet text
-            returns a dictionary of (hashtag, ratio) attributes.
-            The ratio is calculated as the mean of the distinct hashtag ratios of each tweet they appear in
-        """
-
-        hashtag_ratio = {}
-        for hashtag in self.hashtags:
-            hashtag_ratio[hashtag["text"]] = []
-
-        for tweetId, hashtagList in self.tweet_hashtag_map.items():
-
-            tweet = self.dbHandler.getTweetById(tweetId)
-
-            text = self.get_tweet_text(tweet)
-            text = re.sub(r"[^\w\s(#)]", ' ', text)# replace special characters with a space
-            word_list = text.split()
-
-            for hashtag in hashtagList:
-                pattern = "#{}".format(hashtag["text"])
-
-
-                position = word_list.index(pattern)
-                ratio = position / len(word_list)
-                hashtag_ratio[hashtag["text"]].append(ratio)
-
-        hashtag_ratio = {hashtag: np.array(ratio_list).mean() for hashtag, ratio_list in hashtag_ratio.items()}
-
-        return hashtag_ratio
-
-    def __get_hashtags_cooccurance(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes.
-            True is given if more than 40% of the specific hashtag occurences are collocated with other hashtags
-            1: true
-            0: false
-        """
-
-        appearance_counter = {}
-        cooccurance_counter = {}
-
-        # initialize counters
-        for hashtag in self.hashtags:
-            appearance_counter[hashtag["text"]] = 0
-            cooccurance_counter[hashtag["text"]] = 0
-
-        for hashtag_list in self.tweet_hashtag_map.values():
-            if len(hashtag_list) == 1:  # no coexisting hashtags in this list
-                appearance_counter[hashtag_list[0]["text"]] += 1
-            else:  # only coexisting hashtags in this list
-                for hashtag in hashtag_list:
-                    appearance_counter[hashtag["text"]] += 1
-                    cooccurance_counter[hashtag["text"]] += 1
-
-        ###calculate ratio so as to consider 40% threshold
-        ratio_hashtag_cooccurance = {}
-        for hashtag, value in appearance_counter.items():
-            ratio_hashtag_cooccurance[hashtag] = cooccurance_counter[hashtag] / float(value)
-
-        for hashtag, value in ratio_hashtag_cooccurance.items():
-            ratio_hashtag_cooccurance[hashtag] = 1 if ratio_hashtag_cooccurance[hashtag] >= self.__COOCCURANCE_THRESHOLD else 0
-
-        return ratio_hashtag_cooccurance
-
-    def __get_hashtags_special_signals(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes whether they contain special signals, such as gooood or !!!!, or not.
-            3 or more consecutive letters or symbols required
-            1: true
-            0: false
-        """
-
-        special_signals = {}
-        for hashtag in self.hashtags:
-            temp_list = re.findall(r'((\w)\2{2,})', hashtag["text"])
-            special_signals[hashtag["text"]] = 1 if len(temp_list) else 0
-
-        return special_signals
-
-    def __get_hashtags_no_caps(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes whether they contain only lowercase letters or not
-            1: true
-            0: false
-        """
-        no_caps = {}
-        for hashtag in self.hashtags:
-            no_caps[hashtag["text"]] = 1 if hashtag["text"].islower() else 0
-
-        return no_caps
-
-    def __get_hashtags_any_caps(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes whether they contain any capital letters or not
-            1: true
-            0: false
-        """
-        any_caps = {}
-        for hashtag in self.hashtags:
-            any_caps[hashtag["text"]] = 1 if any(char.isupper() for char in hashtag["text"]) else 0
-
-        return any_caps
-
-    def __get_hashtags_all_caps(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes whether they contain only capital letters or not
-            1: true
-            0: false
-        """
-        all_caps = {}
-        for hashtag in self.hashtags:
-            all_caps[hashtag["text"]] = 1 if hashtag["text"].isupper() else 0
-
-        return all_caps
-
-    def __get_hashtags_contain_digits(self):
-        """
-            returns a dictionary of (hashtag, 1/0) attributes whether they contain digits or not.
-            1: true
-            0: false
-        """
-        contain_digits = {}
-        for hashtag in self.hashtags:
-            contain_digits[hashtag["text"]] = 1 if any(char.isdigit() for char in hashtag["text"]) else 0
-
-        return contain_digits
-
-    def __get_hashtags_length(self):
-        """
-            returns a dictionary of (hashtag, hashtagLength) attributes
-        """
-        char_length = {}
-        for hashtag in self.hashtags:
-            char_length[hashtag["text"]] = hashtag["indices"][1] - hashtag["indices"][0] - 1
-
-        return char_length
-
-    def __get_hashtag_sentiment(self):
-        """
-            Returns a dictionary of (hashtag, 2/1/0) attributes.
-            The sentiment is extracted as the majority of distinct tweet sentiments
-            0: negative
-            1: neutral
-            2: positive
-        """
-        hashtag_sentiment = {}
-        for hashtag in self.hashtags:
-            hashtag_sentiment[hashtag["text"]] = []
-
-        tweet_sentiment = self.get_tweets_sentiment()
-        for tweetId, sentiment in tweet_sentiment.items():
-            hashtag_list = self.tweet_hashtag_map[tweetId]  # get tweet specific hashtags
-            for hashtag in hashtag_list:
-                hashtag_sentiment[hashtag["text"]].append(sentiment)
-
-        hashtag_sentiment = {hashtag: self.most_common(sentiment_list) for hashtag, sentiment_list in
-                             hashtag_sentiment.items()}
-
-        return hashtag_sentiment
-
-
-    def __get_hashtags_created_at_and_lifespan(self):
-        """
-        :return: the return of __get_hashtag_creation_time_and_lifespan for every hashtag in dictionary form
-        """
-        hashtag_creation = {}
-        hashtag_lifespan = {}
-        for hashtag in self.hashtags:
-            hashtag_creation[hashtag["text"]] = 0
-            hashtag_lifespan[hashtag["text"]] = 0
-
-        for hashtag in self.hashtags:
-            values = self.__get_hashtag_creation_time_and_lifespan(hashtag["text"])
-            hashtag_creation[hashtag["text"]] = values[0]
-            hashtag_lifespan[hashtag["text"]] = values[1]
-
-        return hashtag_creation, hashtag_lifespan
-
-
-    def __get_hashtag_creation_time_and_lifespan(self, hashtag):
+    def get_hashtags_created_at_and_lifespan(self):
         """
         :param hashtag: the hashtag to calculate creation time and lifespan
         :return: the creation time (as a distance from Unix time: January 1, 1970) and lifespan (in seconds) of given hashtag
         """
         hashtag_creation_time = []
-        for tweetId, hashtagList in self.tweet_hashtag_map.items():
-            for h in hashtagList:
-                if hashtag == h["text"]:
-                    tweet = self.dbHandler.getTweetById(tweetId)
-                    created_at = tweet["created_at"]
-                    hashtag_creation_time.append(created_at)
+        for tweet in self.tweets:
+            created_at = tweet["created_at"]
+            hashtag_creation_time.append(created_at)
 
         if len(hashtag_creation_time) == 1:
             return time.mktime(hashtag_creation_time[0].timetuple()), timedelta().total_seconds()#return the same object as the else statement
@@ -265,3 +63,122 @@ class HashtagFeatureExtractor(FeatureExtractor):
             newest = max(hashtag_creation_time)
             lifespan = newest - oldest
             return time.mktime(oldest.timetuple()), lifespan.total_seconds()
+
+    def get_hashtag_popularity(self):
+        """
+        :return: the number of tweets that the hashtag exists in
+        """
+
+        return len(self.tweets)
+
+    def get_hashtag_sentiment(self):
+        """
+            The sentiment is extracted as the majority of distinct tweet sentiments
+            0: negative
+            1: neutral
+            2: positive
+        """
+        hashtag_sentiment = []
+        tweet_sentiment = self.get_tweets_sentiment()
+        for _, sentiment in tweet_sentiment.items():
+            hashtag_sentiment.append(sentiment)
+
+        return self.most_common(hashtag_sentiment)
+
+
+    def get_hashtags_location(self):
+        """
+            finds the location of hashtag inside the corresponding tweet text
+            The ratio is calculated as the mean of the distinct hashtag ratios of each tweet it appears in
+        """
+
+        hashtag_ratio = []
+
+        for tweet in self.tweets:
+
+            text = self.get_tweet_text(tweet)
+            text = re.sub(r"[^\w\s#]", ' ', text)# replace special characters with a space
+            word_list = text.split()
+
+            pattern = "#{}".format(self.hashtag)
+
+            position = word_list.index(pattern)
+            ratio = position / len(word_list)
+            hashtag_ratio.append(ratio)
+
+        return np.array(hashtag_ratio).mean()
+
+    def get_hashtags_cooccurance(self):
+        """
+            returns True if more than 40% of the specific hashtag occurences are collocated with other hashtags
+            1: true
+            0: false
+        """
+
+        appearance_counter = len(self.tweets)
+        cooccurance_counter = 0
+
+        # initialize counters
+        for tweet in self.tweets:
+            hashtags = self.get_hashtags_from_tweet(tweet)
+            if len(hashtags) > 1:
+                cooccurance_counter += 1
+
+        ratio = cooccurance_counter / appearance_counter
+
+        return 1 if ratio >= self.__COOCCURANCE_THRESHOLD else 0
+
+    def get_hashtags_special_signals(self):
+        """
+            returns whether the hashtag contains special signals, such as gooood or !!!!, or not.
+            3 or more consecutive letters or symbols required
+            1: true
+            0: false
+        """
+
+        temp_list = re.findall(r'((\w)\2{2,})', self.hashtag)
+
+        return 1 if len(temp_list) else 0
+
+    def get_hashtags_no_caps(self):
+        """
+            returns whether the hashtag contains only lowercase letters or not
+            1: true
+            0: false
+        """
+
+        return 1 if self.hashtag.islower() else 0
+
+    def get_hashtags_any_caps(self):
+        """
+            returns whether the hashtag contains any capital letters or not
+            1: true
+            0: false
+        """
+
+        return 1 if any(char.isupper() for char in self.hashtag) else 0
+
+    def get_hashtags_all_caps(self):
+        """
+            returns whether the hashtag contains only capital letters or not
+            1: true
+            0: false
+        """
+
+        return 1 if self.hashtag.isupper() else 0
+
+    def get_hashtags_contain_digits(self):
+        """
+            returns whether the hashtag contains digits or not.
+            1: true
+            0: false
+        """
+
+        return 1 if any(char.isdigit() for char in self.hashtag) else 0
+
+    def get_hashtags_length(self):
+        """
+            returns the hashtag length
+        """
+
+        return len(self.hashtag)
