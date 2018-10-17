@@ -198,7 +198,7 @@ class TweetFeatureExtractor(FeatureExtractor):
 
         from tqdm import tqdm
         for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            tweets = self.dbHandler.getTweetsByNum(chunk_size, skip=skip)
+            tweets = ( el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip)) #create generator from list
             for tweet in tweets:
                 if self.contains_urls(tweet):
                     total_urls += 1
@@ -227,7 +227,7 @@ class TweetFeatureExtractor(FeatureExtractor):
 
         from tqdm import tqdm
         for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            tweets = self.dbHandler.getTweetsByNum(chunk_size, skip=skip)
+            tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip)) #create generator from list
             for tweet in tweets:
                 if self.contains_mentions(tweet):
                     total_mentions += 1
