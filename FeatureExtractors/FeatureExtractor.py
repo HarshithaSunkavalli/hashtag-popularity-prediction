@@ -2,8 +2,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import re
 import itertools
 import operator
-from collections import Counter
-from FeatureExtractors.IOHandler import IOHandler
+import pandas as pd
 
 class FeatureExtractor:
 
@@ -155,8 +154,19 @@ class FeatureExtractor:
             skip += chunk_size
 
         ioHandler.writeListToCSV(hashtags)
-        # counter = Counter(hashtags)
-        # top_k = counter.most_common(k)#returns tuples of (hashtag, frequency)
-        # top_k = [h[0] for h in top_k]
+
+    def create_top_k_csv(self, ioHandler, input="hashtags.csv", output="top_k.csv"):
+
+        hashtags = pd.read_csv(input)["hashtag"]
+        from tqdm import tqdm
+        appearances = [len(self.dbHandler.getTweetsForHashtag(hashtag)) for hashtag in tqdm(hashtags)]
+
+        hashtags, appearances = (list(t) for t in zip(*sorted(zip(hashtags, appearances), key=operator.itemgetter(1), reverse=True)))
+
+        hashtags = hashtags[:10]
+        appearances = appearances[:10]
+        print(hashtags, appearances)
+
+        ioHandler.writeListToCSV(hashtags, my_csv=output)
 
 
