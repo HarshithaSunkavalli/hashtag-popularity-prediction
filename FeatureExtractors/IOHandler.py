@@ -5,10 +5,6 @@ import pandas as pd
 class IOHandler:
 
     def writeToCSV(self, data, header):
-        """
-        :param labels: the csv column names
-        :param data: list of dictionary key value items. First key: value must be hashtag: hashtag value.
-        """
 
         labels = list(data.keys())
 
@@ -21,17 +17,15 @@ class IOHandler:
 
             writer.writerow(data)
 
-    def writeListToCSV(self, l, label, header, my_csv="hashtags.csv"):
+    def writeListToCSV(self, l, label="hashtag", my_csv="hashtags.csv"):
 
         with open(my_csv, "a", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=[label])
+            writer.writeheader()
 
-            dictionary = {label: value for value in l}
+            for value in l:
+                writer.writerow({label: value})
 
-            if header:
-                writer.writeheader()
-
-            writer.writerow(dictionary)
 
     def readFromCSV(self, csv="features.csv"):
         return pd.read_csv(csv)

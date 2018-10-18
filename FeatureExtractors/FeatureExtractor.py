@@ -147,18 +147,14 @@ class FeatureExtractor:
         from tqdm import tqdm
         for _ in tqdm(range(0, total_tweets, chunk_size)):
             tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip))  # create generator from list
+            temp = 0
             for tweet in tweets:
+                temp += len(self.get_hashtags_from_tweet(tweet))
                 hashtags.update(self.get_hashtags_from_tweet(tweet))
 
-            #if skip equals 0 write header, as it is the first time data is written in csv
-            if skip == 0:
-                header = True
-            else:
-                header = False
-
-            ioHandler.writeListToCSV(hashtags, "hashtag", header)
             skip += chunk_size
 
+        ioHandler.writeListToCSV(hashtags)
         # counter = Counter(hashtags)
         # top_k = counter.most_common(k)#returns tuples of (hashtag, frequency)
         # top_k = [h[0] for h in top_k]
