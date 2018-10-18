@@ -21,6 +21,18 @@ class IOHandler:
 
             writer.writerow(data)
 
+    def writeListToCSV(self, l, label, header, my_csv="hashtags.csv"):
+
+        with open(my_csv, "a", newline="", encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=[label])
+
+            dictionary = {label: value for value in l}
+
+            if header:
+                writer.writeheader()
+
+            writer.writerow(dictionary)
+
     def readFromCSV(self, csv="features.csv"):
         return pd.read_csv(csv)
 

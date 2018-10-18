@@ -15,6 +15,7 @@ class FeatureExtractor:
     """
     K = 10
     TWEETS_TO_FETCH = 10000
+    CHUNK_SIZE = 1000
 
     def __init__(self, dbHandler=None, featureExtractor=None):
 
@@ -24,10 +25,6 @@ class FeatureExtractor:
         else:
             self.dbHandler = dbHandler
             self.tweets = []
-
-            #run once to create collection
-            #self.tweets, self.hashtags = self.__get_tweets_for_top_k_hashtags(self.K)
-            #self.dbHandler.storeTopKTweets()
 
     def get_hashtags_from_tweet(self, tweet):
         """
@@ -58,6 +55,8 @@ class FeatureExtractor:
                 hashtags.extend(retweeted_potential_hashtags)
         else:
             pass
+
+        hashtags = [hashtag["text"] for hashtag in hashtags]
 
         return hashtags
 
@@ -134,3 +133,34 @@ class FeatureExtractor:
 
         # pick the highest-count/earliest item
         return max(groups, key=_auxfun)[0]
+
+    def create_hashtag_csv(self, ioHandler):
+        """
+        :param k: number of top hashtags
+        """
+
+        chunk_size = self.CHUNK_SIZE
+        skip = 0
+
+        total_tweets = self.dbHandler.getNumOfTweets()
+        hashtags = set()
+        from tqdm import tqdm
+        for _ in tqdm(range(0, total_tweets, chunk_size)):
+            tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip))  # create generator from list
+            for tweet in tweets:
+                hashtags.update(self.get_hashtags_from_tweet(tweet))
+
+            #if skip equals 0 write header, as it is the first time data is written in csv
+            if skip == 0:
+                header = True
+            else:
+                header = False
+
+            ioHandler.writeListToCSV(hashtags, "hashtag", header)
+            skip += chunk_size
+
+        # counter = Counter(hashtags)
+        # top_k = counter.most_common(k)#returns tuples of (hashtag, frequency)
+        # top_k = [h[0] for h in top_k]
+
+

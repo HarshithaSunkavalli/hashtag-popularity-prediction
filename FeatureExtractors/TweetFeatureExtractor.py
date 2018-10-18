@@ -5,7 +5,7 @@ import gc
 
 class TweetFeatureExtractor(FeatureExtractor):
 
-    CHUNK_SIZE = 1000
+
     def get_tweet_features(self, hashtag):
         """
             stores the tweet related features

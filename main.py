@@ -17,41 +17,46 @@ from Predictors.PriorDist import PriorDist
 
 CLUSTERING = "KNN"
 
-def createFeatureCSV(db_handler, ioHandler):
+
+def createFeatureCSV(db_handler, ioHandler, createCSVs=False):
     """
         Processes tweets and hashtags to produce the necessary features.
         Writes the features in a CSV.
     """
-    hashtags = ioHandler.readFromCSV("top_k.csv")["hashtag"]
-
     feature_extractor = FeatureExtractor(db_handler)
-    hashtag_feature_extractor = HashtagFeatureExtractor(featureExtractor=feature_extractor)
-    tweet_feature_extractor = TweetFeatureExtractor(featureExtractor=feature_extractor)
 
-    for index, hashtag in enumerate(hashtags):
-        features = {}
-        print("Hashtag: ", hashtag)
-        features.update({"hashtag": hashtag})
+    if createCSVs:
+        print("Extracting hashtags from tweets")
+        feature_extractor.create_hashtag_csv(ioHandler)
+    else:
+        hashtag_feature_extractor = HashtagFeatureExtractor(featureExtractor=feature_extractor)
+        tweet_feature_extractor = TweetFeatureExtractor(featureExtractor=feature_extractor)
 
-        hashtag_features = hashtag_feature_extractor.get_hashtag_features(hashtag)
-        features.update(hashtag_features)
+        hashtags = ioHandler.readFromCSV("top_k.csv")["hashtag"]
 
-        tweet_features = tweet_feature_extractor.get_tweet_features(hashtag)
-        features.update(tweet_features)
+        for index, hashtag in enumerate(hashtags):
+            features = {}
+            print("Hashtag: ", hashtag)
+            features.update({"hashtag": hashtag})
 
-        if index == 0:
-            header = True
-        else:
-            header = False
-        print("Writing features to CSV")
-        ioHandler.writeToCSV(features, header)
+            hashtag_features = hashtag_feature_extractor.get_hashtag_features(hashtag)
+            features.update(hashtag_features)
 
-        gc.collect()
+            tweet_features = tweet_feature_extractor.get_tweet_features(hashtag)
+            features.update(tweet_features)
+
+            if index == 0:
+                header = True
+            else:
+                header = False
+            print("Writing features to CSV")
+            ioHandler.writeToCSV(features, header)
+
 
 if __name__ == '__main__':
     db_handler = DbHandler.DbHandler()
     ioHandler = IOHandler()
-    createFeatureCSV(db_handler, ioHandler)
+    createFeatureCSV(db_handler, ioHandler, createCSVs=True)
     # data = ioHandler.readFromCSV("top_k.csv")
     # ioHandler.top_k_hashtags_CSV(data, 10)
     #
