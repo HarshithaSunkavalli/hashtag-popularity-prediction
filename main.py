@@ -28,13 +28,13 @@ def createFeatureCSV(db_handler, ioHandler):
 
     if CREATE_CSV:
         print("Extracting hashtags from tweets")
-        #feature_extractor.create_hashtag_csv(ioHandler)
+        feature_extractor.create_hashtag_csv(ioHandler)
         feature_extractor.create_top_k_csv(ioHandler)
     else:
         hashtag_feature_extractor = HashtagFeatureExtractor(featureExtractor=feature_extractor)
         tweet_feature_extractor = TweetFeatureExtractor(featureExtractor=feature_extractor)
 
-        hashtags = ioHandler.readFromCSV("top_k.csv")["hashtag"]
+        hashtags = ioHandler.readFromCSV("hashtags.csv")["hashtag"]
 
         for index, hashtag in enumerate(hashtags):
             features = {}

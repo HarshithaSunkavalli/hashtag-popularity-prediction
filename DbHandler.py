@@ -67,8 +67,15 @@ class DbHandler:
         tweets = list(collection.find({"entities.hashtags.text" : "{}".format(hashtag)}))
 
         tweetsExtended = list(collection.find({"extended_tweet.entities.hashtags.text" : "{}".format(hashtag)}))
+        tweetsRetweeted = list(collection.find({"retweeted_status.entities.hashtags.text": "{}".format(hashtag)}))
+        tweetsRetweetedExtended = list(collection.find({"retweeted_status.extended_tweet.entities.hashtags.text": "{}".format(hashtag)}))
+
         if len(tweetsExtended) > 0:
             tweets.extend(tweetsExtended)
+        if len(tweetsRetweeted) > 0:
+            tweets.extend(tweetsRetweeted)
+        if len(tweetsRetweetedExtended) > 0:
+            tweets.extend(tweetsRetweetedExtended)
 
         return tweets
 

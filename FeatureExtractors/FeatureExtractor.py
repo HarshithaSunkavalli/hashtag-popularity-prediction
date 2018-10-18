@@ -165,7 +165,6 @@ class FeatureExtractor:
 
         hashtags = hashtags[:10]
         appearances = appearances[:10]
-        print(hashtags, appearances)
 
         ioHandler.writeListToCSV(hashtags, my_csv=output)
 
