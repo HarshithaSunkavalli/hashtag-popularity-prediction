@@ -146,25 +146,34 @@ class FeatureExtractor:
         from tqdm import tqdm
         for _ in tqdm(range(0, total_tweets, chunk_size)):
             tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip))  # create generator from list
-            temp = 0
             for tweet in tweets:
-                temp += len(self.get_hashtags_from_tweet(tweet))
                 hashtags.update(self.get_hashtags_from_tweet(tweet))
 
             skip += chunk_size
 
         ioHandler.writeListToCSV(hashtags)
 
-    def create_top_k_csv(self, ioHandler, input="hashtags.csv", output="top_k.csv"):
+    def create_top_k_csv(self, ioHandler, output="top_k.csv"):
 
-        hashtags = pd.read_csv(input)["hashtag"]
+        chunk_size = self.CHUNK_SIZE
+        skip = 0
+
+        total_tweets = self.dbHandler.getNumOfTweets()
+        hashtags = []
         from tqdm import tqdm
-        appearances = [len(self.dbHandler.getTweetsForHashtag(hashtag)) for hashtag in tqdm(hashtags)]
+        for _ in tqdm(range(0, total_tweets, chunk_size)):
+            tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip))  # create generator from list
+            for tweet in tweets:
+                hashtags.extend(self.get_hashtags_from_tweet(tweet))
 
-        hashtags, appearances = (list(t) for t in zip(*sorted(zip(hashtags, appearances), key=operator.itemgetter(1), reverse=True)))
+            skip += chunk_size
 
-        hashtags = hashtags[:10]
+        from collections import Counter
+        counter = Counter(hashtags)
+        top = counter.most_common(10)
+        top = [el[0] for el in top]
 
-        ioHandler.writeListToCSV(hashtags, my_csv=output)
+
+        ioHandler.writeListToCSV(top, my_csv=output)
 
 
