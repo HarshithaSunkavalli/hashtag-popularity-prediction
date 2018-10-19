@@ -164,7 +164,6 @@ class FeatureExtractor:
         hashtags, appearances = (list(t) for t in zip(*sorted(zip(hashtags, appearances), key=operator.itemgetter(1), reverse=True)))
 
         hashtags = hashtags[:10]
-        appearances = appearances[:10]
 
         ioHandler.writeListToCSV(hashtags, my_csv=output)
 

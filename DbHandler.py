@@ -54,29 +54,21 @@ class DbHandler:
         tweet = self.db[db].find_one({"id_str": id})
         return tweet
 
-    def getTweetsFromTopK(self):
-        tweets = self.db["topK"].find({})
-        return list(tweets)
+    # def getTweetsFromTopK(self):
+    #     tweets = self.db["topK"].find({})
+    #     return list(tweets)
+    #
+    # def storeTopKTweets(self, tweets):
+    #     collection = self.db["topK"]
+    #     collection.insert_many(tweets)
 
-    def storeTopKTweets(self, tweets):
-        collection = self.db["topK"]
-        collection.insert_many(tweets)
-
-    def getTweetsForHashtag(self, hashtag="India", db="topK"):
+    def getTweetsForHashtag(self, hashtag="India", db="plastic"):
         collection = self.db[db]
-        tweets = list(collection.find({"entities.hashtags.text" : "{}".format(hashtag)}))
-
-        tweetsExtended = list(collection.find({"extended_tweet.entities.hashtags.text" : "{}".format(hashtag)}))
-        tweetsRetweeted = list(collection.find({"retweeted_status.entities.hashtags.text": "{}".format(hashtag)}))
-        tweetsRetweetedExtended = list(collection.find({"retweeted_status.extended_tweet.entities.hashtags.text": "{}".format(hashtag)}))
-
-        if len(tweetsExtended) > 0:
-            tweets.extend(tweetsExtended)
-        if len(tweetsRetweeted) > 0:
-            tweets.extend(tweetsRetweeted)
-        if len(tweetsRetweetedExtended) > 0:
-            tweets.extend(tweetsRetweetedExtended)
-
+        exp1 = {"entities.hashtags.text" : "{}".format(hashtag)}
+        exp2 = {"extended_tweet.entities.hashtags.text" : "{}".format(hashtag)}
+        exp3 = {"retweeted_status.entities.hashtags.text": "{}".format(hashtag)}
+        exp4 = {"retweeted_status.extended_tweet.entities.hashtags.text": "{}".format(hashtag)}
+        tweets = list(collection.find({"$or": [exp1, exp2, exp3, exp4]}))
         return tweets
 
     def getNumOfTweets(self, db="plastic"):

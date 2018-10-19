@@ -28,7 +28,7 @@ def createFeatureCSV(db_handler, ioHandler):
 
     if CREATE_CSV:
         print("Extracting hashtags from tweets")
-        feature_extractor.create_hashtag_csv(ioHandler)
+        #feature_extractor.create_hashtag_csv(ioHandler)
         feature_extractor.create_top_k_csv(ioHandler)
     else:
         hashtag_feature_extractor = HashtagFeatureExtractor(featureExtractor=feature_extractor)
