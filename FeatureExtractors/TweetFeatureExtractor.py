@@ -18,16 +18,16 @@ class TweetFeatureExtractor(FeatureExtractor):
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
         #ratio features
         self.total_tweets = self.dbHandler.getNumOfTweets()
-        # print("Extracting tweet ratio")
-        # tweet_features["tweet_ratio"] = self.get_tweet_ratio()
-        # print("Extracting author ratio")
-        # tweet_features["author_ratio"] = self.get_author_ratio()
-        # print("Extracting retweet ratio")
-        # tweet_features["retweet_ratio"] = self.get_retweet_ratio()
-        # print("Extracting mention ratio")
-        # tweet_features["mention_ratio"] = self.get_mention_ratio()
-        # print("Extracting url ratio")
-        # tweet_features["url_ratio"] = self.get_url_ratio()
+        print("Extracting tweet ratio")
+        tweet_features["tweet_ratio"] = self.get_tweet_ratio()
+        print("Extracting author ratio")
+        tweet_features["author_ratio"] = self.get_author_ratio()
+        print("Extracting retweet ratio")
+        tweet_features["retweet_ratio"] = self.get_retweet_ratio()
+        print("Extracting mention ratio")
+        tweet_features["mention_ratio"] = self.get_mention_ratio()
+        print("Extracting url ratio")
+        tweet_features["url_ratio"] = self.get_url_ratio()
         #topic feature
         #tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
@@ -121,7 +121,6 @@ class TweetFeatureExtractor(FeatureExtractor):
             skip += chunk_size
 
             divergence = self.get_divergence_for_chunk(text, hashtag_text)
-            print(divergence)
             hashtag_clarity.append(divergence)
 
         return np.asarray(hashtag_clarity).mean()

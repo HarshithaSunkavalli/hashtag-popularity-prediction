@@ -17,7 +17,7 @@ from Predictors.PriorDist import PriorDist
 
 CLUSTERING = "KNN"
 FEATURE_EXTRACTION = True
-CREATE_CSV = True
+CREATE_CSV = False
 
 def createFeatureCSV(db_handler, ioHandler):
     """
