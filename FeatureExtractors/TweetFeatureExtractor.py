@@ -21,7 +21,6 @@ class TweetFeatureExtractor(FeatureExtractor):
         #sentiment feature for tweet
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
         #ratio features
-        print("ratios")
         tweet_features["tweet_ratio"] = self.get_tweet_ratio()
         tweet_features["author_ratio"] = self.get_author_ratio()
         tweet_features["retweet_ratio"] = self.get_retweet_ratio()
@@ -30,8 +29,7 @@ class TweetFeatureExtractor(FeatureExtractor):
         #topic feature
         #tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
-        print("word_divergence")
-        tweet_features["word_divergence_distribution"] = self.get_word_divergence()
+        # tweet_features["word_divergence_distribution"] = self.get_word_divergence()
 
         return tweet_features
 
