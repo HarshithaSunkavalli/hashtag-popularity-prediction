@@ -1,4 +1,4 @@
-import pandas as pd
+from tqdm import tqdm
 import DbHandler
 import PlotFactory
 from FeatureExtractors.FeatureExtractor import FeatureExtractor
@@ -33,26 +33,28 @@ def createFeatureCSV(db_handler, ioHandler):
     else:
         hashtag_feature_extractor = HashtagFeatureExtractor(featureExtractor=feature_extractor)
         tweet_feature_extractor = TweetFeatureExtractor(featureExtractor=feature_extractor)
+        tweet_feature_extractor.precalculateValues()
 
         hashtags = ioHandler.readFromCSV("hashtags.csv")["hashtag"]
 
-        for index, hashtag in enumerate(hashtags):
-            features = {}
-            print("Hashtag: ", hashtag)
-            features.update({"hashtag": hashtag})
+        for index, hashtag in tqdm(enumerate(hashtags)):
+            if hashtag == "pollution":
+                features = {}
+                print("Hashtag: ", hashtag)
+                features.update({"hashtag": hashtag})
 
-            hashtag_features = hashtag_feature_extractor.get_hashtag_features(hashtag)
-            features.update(hashtag_features)
+                hashtag_features = hashtag_feature_extractor.get_hashtag_features(hashtag)
+                features.update(hashtag_features)
 
-            tweet_features = tweet_feature_extractor.get_tweet_features(hashtag)
-            features.update(tweet_features)
+                tweet_features = tweet_feature_extractor.get_tweet_features(hashtag)
+                features.update(tweet_features)
 
             if index == 0:
                 header = True
             else:
                 header = False
-            print("Writing features to CSV")
-            ioHandler.writeToCSV(features, header)
+            #print("Writing features to CSV")
+            #ioHandler.writeToCSV(features, header)
 
 
 if __name__ == '__main__':

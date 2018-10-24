@@ -1,9 +1,13 @@
 from FeatureExtractors.FeatureExtractor import FeatureExtractor
 import numpy as np
 import LDA
-import gc
 
 class TweetFeatureExtractor(FeatureExtractor):
+
+    def precalculateValues(self):
+        self.total_tweets = self.dbHandler.getNumOfTweets()
+        print("Extracting total attributes")
+        self.total_retweets, self.total_authors, self.total_urls, self.total_mentions, self.total_tweet_list, self.total_tweet_keys = self.get_total_attributes()
 
 
     def get_tweet_features(self, hashtag):
@@ -17,24 +21,63 @@ class TweetFeatureExtractor(FeatureExtractor):
         #sentiment feature for tweet
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
         #ratio features
-        self.total_tweets = self.dbHandler.getNumOfTweets()
-        print("Extracting tweet ratio")
+        print("ratios")
         tweet_features["tweet_ratio"] = self.get_tweet_ratio()
-        print("Extracting author ratio")
         tweet_features["author_ratio"] = self.get_author_ratio()
-        print("Extracting retweet ratio")
         tweet_features["retweet_ratio"] = self.get_retweet_ratio()
-        print("Extracting mention ratio")
         tweet_features["mention_ratio"] = self.get_mention_ratio()
-        print("Extracting url ratio")
         tweet_features["url_ratio"] = self.get_url_ratio()
         #topic feature
         #tweet_features["topic"] = self.__get_topic()
         #word divergence distribution feature
-        print("Extracting word divergence distribution")
+        print("word_divergence")
         tweet_features["word_divergence_distribution"] = self.get_word_divergence()
 
         return tweet_features
+
+    def get_total_attributes(self):
+        """
+        Calculate 4 attributes for all tweets in database.
+        Attributes: total number of retweets, urls, mentions and authors
+        They will be used as denominators in specific ratio extractions
+        """
+        total_retweets = 0
+        total_urls = 0
+        total_mentions = 0
+
+        chunk_size = self.CHUNK_SIZE
+        skip = 0
+
+        authors = set()
+        total_tweet_list = []
+        total_tweet_keys = []
+        from tqdm import tqdm
+        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
+            tweets = self.dbHandler.getTweetsByNum(chunk_size, skip=skip)
+            for tweet in tweets:
+                if self.is_retweet(tweet):
+                    total_retweets += 1
+                if self.contains_mentions(tweet):
+                    total_urls += 1
+                if self.contains_mentions(tweet):
+                    total_mentions += 1
+
+                authors.add(self.get_author(tweet))
+
+            text = self.dbHandler.getTweetTexts(chunk_size, skip=skip)
+            tweet_dict = self.textToFreqDict(text)
+            tweet_keys = list(tweet_dict.keys())
+            tweet_list = [value / len(tweet_dict) for value in tweet_dict.values()]  # () creates generator for ram efficiency
+            total_tweet_keys.append(tweet_keys)
+            total_tweet_list.append(tweet_list)
+
+            skip += chunk_size
+
+        total_authors = len(authors)
+
+
+
+        return total_retweets, total_authors, total_urls, total_mentions, total_tweet_list, total_tweet_keys
 
     def get_tweet_ratio(self):
         """
@@ -53,17 +96,7 @@ class TweetFeatureExtractor(FeatureExtractor):
             author = self.get_author(tweet)
             hashtag_authors.add(author)
 
-        total_authors = set()
-        chunk_size = self.CHUNK_SIZE
-        skip = 0
-
-        from tqdm import tqdm
-        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            authors = self.dbHandler.getTweetAuthors(chunk_size, skip=skip)
-            skip += chunk_size
-            total_authors.update(authors)
-
-        return len(hashtag_authors) / len(total_authors)
+        return len(hashtag_authors) / self.total_authors
 
     def get_author(self, tweet):
         """
@@ -80,16 +113,7 @@ class TweetFeatureExtractor(FeatureExtractor):
             if self.is_retweet(tweet):
                 hashtag_retweets += 1
 
-        total_retweets = 0
-        chunk_size = self.CHUNK_SIZE
-        skip = 0
-
-        from tqdm import tqdm
-        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            total_retweets += self.dbHandler.getRetweetsNum(chunk_size, skip=skip)
-            skip += chunk_size
-
-        return hashtag_retweets / total_retweets
+        return hashtag_retweets / self.total_retweets
 
     def is_retweet(self, tweet):
         """
@@ -112,29 +136,17 @@ class TweetFeatureExtractor(FeatureExtractor):
 
         hashtag_clarity = []
 
-        chunk_size = self.CHUNK_SIZE
-        skip = 0
-
         from tqdm import tqdm
-        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            text = self.dbHandler.getTweetTexts(chunk_size, skip=skip)
-            skip += chunk_size
-
-            divergence = self.get_divergence_for_chunk(text, hashtag_text)
+        for tweet_list, tweet_keys in zip(self.total_tweet_list, self.total_tweet_keys):
+            divergence = self.get_divergence_for_chunk(tweet_list, tweet_keys, hashtag_text)
             hashtag_clarity.append(divergence)
 
         return np.asarray(hashtag_clarity).mean()
 
-    def get_divergence_for_chunk(self, text, hashtag_text):
-        # calculate word frequencies
-        tweet_dict = self.textToFreqDict(text)
-        tweet_keys = list(tweet_dict.keys())
-        tweet_list = (value / len(tweet_dict) for value in tweet_dict.values()) # () creates generator for ram efficiency
-
-        word_dict = self.textToFreqDict(hashtag_text)
-        word_list = (word_dict[key] / len(word_dict) if key in word_dict.keys() else 0 for key in tweet_keys)
-
-        return self.KL(word_list, tweet_list)
+    def get_divergence_for_chunk(self, tweetList, tweetKeys, hashtagText):
+        word_dict = self.textToFreqDict(hashtagText)
+        word_list = (word_dict[key] / len(word_dict) if key in word_dict.keys() else 0 for key in tweetKeys)
+        return self.KL(word_list, tweetList)
 
     def KL(self, a, b):
 
@@ -191,19 +203,7 @@ class TweetFeatureExtractor(FeatureExtractor):
             if self.contains_urls(tweet):
                 hashtag_urls += 1
 
-        total_urls = 0
-        chunk_size = self.CHUNK_SIZE
-        skip = 0
-
-        from tqdm import tqdm
-        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            tweets = ( el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip)) #create generator from list
-            for tweet in tweets:
-                if self.contains_urls(tweet):
-                    total_urls += 1
-            skip += chunk_size
-
-        return hashtag_urls / total_urls
+        return hashtag_urls / self.total_urls
 
     def contains_urls(self, tweet):
         """
@@ -220,20 +220,7 @@ class TweetFeatureExtractor(FeatureExtractor):
             if self.contains_mentions(tweet):
                 hashtag_mentions += 1
 
-        total_mentions = 0
-        chunk_size = self.CHUNK_SIZE
-        skip = 0
-
-        from tqdm import tqdm
-        for _ in tqdm(range(0, self.total_tweets, chunk_size)):
-            tweets = (el for el in self.dbHandler.getTweetsByNum(chunk_size, skip=skip)) #create generator from list
-            for tweet in tweets:
-                if self.contains_mentions(tweet):
-                    total_mentions += 1
-            print(total_mentions)
-            skip += chunk_size
-
-        return hashtag_mentions / total_mentions
+        return hashtag_mentions / self.total_mentions
 
     def contains_mentions(self, tweet):
         """

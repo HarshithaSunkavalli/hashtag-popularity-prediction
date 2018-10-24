@@ -18,29 +18,22 @@ class HashtagFeatureExtractor(FeatureExtractor):
 
         hashtag_features = {}
         # char length feature
-        print("Extracting char length")
         hashtag_features["char_length"] = self.get_hashtags_length()
         # orthography related features
-        print("Extracting orthography")
         hashtag_features["contains_digits"] = self.get_hashtags_contain_digits()
         hashtag_features["all_caps"] = self.get_hashtags_all_caps()
         hashtag_features["any_caps"] = self.get_hashtags_any_caps()
         hashtag_features["no_caps"] = self.get_hashtags_no_caps()
         hashtag_features["special_signals"] = self.get_hashtags_special_signals()
         # co-occurance feature
-        print("Extracting co-occurance")
         hashtag_features["cooccurance"] = self.get_hashtags_cooccurance()
         # location feature
-        print("Extracting location")
         hashtag_features["location"] = self.get_hashtags_location()
         # hashtag sentiment feature
-        print("Extracting sentiment")
         hashtag_features["hashtag_sentiment"] = self.get_hashtag_sentiment()
         # hashtag popularity feature
-        print("Extracting popularity")
         hashtag_features["popularity"] = self.get_hashtag_popularity()
         # hashtag time series features
-        print("Extracting creation time and lifespan")
         hashtag_features["created_at"], hashtag_features["lifespan"] = self.get_hashtags_created_at_and_lifespan()
 
         return hashtag_features
@@ -100,9 +93,12 @@ class HashtagFeatureExtractor(FeatureExtractor):
             text = re.sub(r"[^\w\s#]", ' ', text)# replace special characters with a space
             word_list = text.split()
 
-            pattern = "#{}".format(self.hashtag)
-
-            position = word_list.index(pattern)
+            for index, word in enumerate(word_list):
+                if re.search(r"\B#" + re.escape(self.hashtag) + r"\b", word):
+                    position = index
+            # pattern = "#{}".format(self.hashtag)
+            #
+            # position = word_list.index(pattern)
             ratio = position / len(word_list)
             hashtag_ratio.append(ratio)
 
