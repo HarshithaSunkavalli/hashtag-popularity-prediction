@@ -1,6 +1,10 @@
 from FeatureExtractors.FeatureExtractor import FeatureExtractor
 import numpy as np
 import LDA
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 class TweetFeatureExtractor(FeatureExtractor):
 
@@ -21,15 +25,15 @@ class TweetFeatureExtractor(FeatureExtractor):
         #sentiment feature for tweet
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
         #ratio features
-        tweet_features["tweet_ratio"] = self.get_tweet_ratio()
-        tweet_features["author_ratio"] = self.get_author_ratio()
-        tweet_features["retweet_ratio"] = self.get_retweet_ratio()
-        tweet_features["mention_ratio"] = self.get_mention_ratio()
-        tweet_features["url_ratio"] = self.get_url_ratio()
+        # tweet_features["tweet_ratio"] = self.get_tweet_ratio()
+        # tweet_features["author_ratio"] = self.get_author_ratio()
+        # tweet_features["retweet_ratio"] = self.get_retweet_ratio()
+        # tweet_features["mention_ratio"] = self.get_mention_ratio()
+        # tweet_features["url_ratio"] = self.get_url_ratio()
         #topic feature
         #tweet_features["topic"] = self.__get_topic()
-        #word divergence distribution feature
-        # tweet_features["word_divergence_distribution"] = self.get_word_divergence()
+        # word divergence distribution feature
+        tweet_features["word_divergence_distribution"] = self.get_word_divergence()
 
         return tweet_features
 
@@ -135,7 +139,7 @@ class TweetFeatureExtractor(FeatureExtractor):
         hashtag_clarity = []
 
         from tqdm import tqdm
-        for tweet_list, tweet_keys in zip(self.total_tweet_list, self.total_tweet_keys):
+        for tweet_list, tweet_keys in tqdm(zip(self.total_tweet_list, self.total_tweet_keys)):
             divergence = self.get_divergence_for_chunk(tweet_list, tweet_keys, hashtag_text)
             hashtag_clarity.append(divergence)
 
@@ -156,8 +160,27 @@ class TweetFeatureExtractor(FeatureExtractor):
         return summary#np.sum(np.where(a != 0, a * np.log(a / b), 0))
 
     def textToFreqDict(self, text):
-        wordlist = np.asarray(text.split())
+        """
+        Tokenizes text.
+        Removes stopwords.
+        Stems and lemmatizes
+        Convert to lowercase
+        :param text:
+        :return: word frequency dictionary
+        """
+        stemmer = PorterStemmer()
+        wordnet_lemmatizer = WordNetLemmatizer()
+        wordlist = word_tokenize(text)
+
+        stop_words = set(stopwords.words('english'))
+
+        wordlist = [word for word in wordlist if not word in stop_words]
+        wordlist = [stemmer.stem(word) for word in wordlist]
+        wordlist = [wordnet_lemmatizer.lemmatize(word) for word in wordlist]
+        wordlist = [word.lower() for word in wordlist]
+
         unique, counts = np.unique(wordlist, return_counts=True)
+
         return dict(zip(unique, counts))
 
     def __get_topic(self):

@@ -93,9 +93,12 @@ class HashtagFeatureExtractor(FeatureExtractor):
             text = re.sub(r"[^\w\s#]", ' ', text)# replace special characters with a space
             word_list = text.split()
 
+            position = -1 # will be returned if hashtag cannot be matched
             for index, word in enumerate(word_list):
-                if re.search(r"\B#" + re.escape(self.hashtag) + r"\b", word):
+                if re.search(r"\B#" + re.escape(self.hashtag) + r"\b", word, re.UNICODE):
                     position = index
+            if position == -1:
+                return position
             # pattern = "#{}".format(self.hashtag)
             #
             # position = word_list.index(pattern)

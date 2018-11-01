@@ -4,11 +4,11 @@ import pandas as pd
 
 class IOHandler:
 
-    def writeToCSV(self, data, header):
+    def writeToCSV(self, data, header, my_csv="features.csv"):
 
         labels = list(data.keys())
 
-        with open("features.csv", "a", newline="", encoding="utf-8") as csvfile:
+        with open(my_csv, "a", newline="", encoding="utf-8") as csvfile:
 
             writer = csv.DictWriter(csvfile, fieldnames=labels)
 
