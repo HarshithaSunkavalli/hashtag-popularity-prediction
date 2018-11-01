@@ -67,6 +67,7 @@ class TweetFeatureExtractor(FeatureExtractor):
                 authors.add(self.get_author(tweet))
 
             text = self.dbHandler.getTweetTexts(chunk_size, skip=skip)
+
             tweet_dict = self.textToFreqDict(text)
             tweet_keys = list(tweet_dict.keys())
             tweet_list = [value / len(tweet_dict) for value in tweet_dict.values()]  # () creates generator for ram efficiency
@@ -136,18 +137,17 @@ class TweetFeatureExtractor(FeatureExtractor):
             text += " "
             hashtag_text += text
 
-        hashtag_clarity = []
+        hashtag_word_dict = self.textToFreqDict(hashtag_text)
 
-        from tqdm import tqdm
-        for tweet_list, tweet_keys in tqdm(zip(self.total_tweet_list, self.total_tweet_keys)):
-            divergence = self.get_divergence_for_chunk(tweet_list, tweet_keys, hashtag_text)
+        hashtag_clarity = []
+        for tweet_list, tweet_keys in zip(self.total_tweet_list, self.total_tweet_keys):
+            divergence = self.get_divergence_for_chunk(tweet_list, tweet_keys, hashtag_word_dict)
             hashtag_clarity.append(divergence)
 
         return np.asarray(hashtag_clarity).mean()
 
-    def get_divergence_for_chunk(self, tweetList, tweetKeys, hashtagText):
-        word_dict = self.textToFreqDict(hashtagText)
-        word_list = (word_dict[key] / len(word_dict) if key in word_dict.keys() else 0 for key in tweetKeys)
+    def get_divergence_for_chunk(self, tweetList, tweetKeys, hashtag_word_dict):
+        word_list = (hashtag_word_dict[key] / len(hashtag_word_dict) if key in hashtag_word_dict.keys() else 0 for key in tweetKeys)
         return self.KL(word_list, tweetList)
 
     def KL(self, a, b):
@@ -180,7 +180,6 @@ class TweetFeatureExtractor(FeatureExtractor):
         wordlist = [word.lower() for word in wordlist]
 
         unique, counts = np.unique(wordlist, return_counts=True)
-
         return dict(zip(unique, counts))
 
     def __get_topic(self):
