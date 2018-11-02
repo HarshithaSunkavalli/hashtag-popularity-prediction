@@ -105,8 +105,8 @@ class SVM:
         cross_validation = True
         if cross_validation:
             f1 = cross_val_score(clf, train_res, labels_res, cv=10, scoring='f1_micro')# list with cv=10 elements in it
-            f1 = max(f1)
-            print("Best Micro-F1 score for 10-fold cross validation on SVM: ", f1)
+            f1 = np.mean(f1)
+            print("Micro-F1 score for 10-fold cross validation on SVM: ", f1)
         else:
             f1 = f1_score(labels_res, y_pred, average="micro")
             print("Micro-F1 score for SVM: ", f1)

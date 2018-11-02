@@ -24,14 +24,14 @@ class TweetFeatureExtractor(FeatureExtractor):
         tweet_features = {}
         #sentiment feature for tweet
         #tweet_features["tweet_sentiment"] = self.get_tweets_sentiment()
+        # topic feature
+        # tweet_features["topic"] = self.__get_topic()
         #ratio features
-        # tweet_features["tweet_ratio"] = self.get_tweet_ratio()
-        # tweet_features["author_ratio"] = self.get_author_ratio()
-        # tweet_features["retweet_ratio"] = self.get_retweet_ratio()
-        # tweet_features["mention_ratio"] = self.get_mention_ratio()
-        # tweet_features["url_ratio"] = self.get_url_ratio()
-        #topic feature
-        #tweet_features["topic"] = self.__get_topic()
+        tweet_features["tweet_ratio"] = self.get_tweet_ratio()
+        tweet_features["author_ratio"] = self.get_author_ratio()
+        tweet_features["retweet_ratio"] = self.get_retweet_ratio()
+        tweet_features["mention_ratio"] = self.get_mention_ratio()
+        tweet_features["url_ratio"] = self.get_url_ratio()
         # word divergence distribution feature
         tweet_features["word_divergence_distribution"] = self.get_word_divergence()
 

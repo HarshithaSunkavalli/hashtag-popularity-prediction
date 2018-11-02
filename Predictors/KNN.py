@@ -87,7 +87,6 @@ class KNN:
         distances, indices = nbrs.kneighbors(train_res)
 
         y_pred = self.find_predicted_label(indices, labels_res)
-
         # print statistics
         self.statistics(train_res, labels_res, y_pred, k)
 
@@ -120,8 +119,8 @@ class KNN:
         cross_validation = True
         if cross_validation:
             f1 = self.cross_validation(train_res, labels_res, k, cv=10, scoring='micro')  # list with cv=10 elements in it
-            f1 = max(f1)
-            print("Best Micro-F1 score for 10-fold cross validation on SVM: ", f1)
+            f1 = np.mean(f1)
+            print("Micro-F1 score for 10-fold cross validation on K Nearest Neighbors: ", f1)
         else:
             f1 = f1_score(labels_res, y_pred, average="micro")
             print("Micro-F1 score for K Nearest Neighbors: ", f1)

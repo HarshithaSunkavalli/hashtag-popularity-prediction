@@ -16,7 +16,7 @@ from Predictors.RandomPredictor import RandomPredictor
 from Predictors.PriorDist import PriorDist
 
 CLUSTERING = "KNN"
-FEATURE_EXTRACTION = True
+FEATURE_EXTRACTION = False
 CREATE_CSV = False
 
 def createFeatureCSV(db_handler, ioHandler):
@@ -62,54 +62,54 @@ if __name__ == '__main__':
     if FEATURE_EXTRACTION:
         createFeatureCSV(db_handler, ioHandler)
     else:
-        data = ioHandler.readFromCSV("top_k.csv")
-        ioHandler.top_k_hashtags_CSV(data, 10)
+        top_hashtags = ioHandler.readFromCSV("top_k.csv")
+
+        data = ioHandler.readFromCSV("features_related.csv")
+
+        test_data = data.loc[data["hashtag"].isin(top_hashtags["hashtag"])]
+        test_data = test_data.reset_index(drop=True)
+
+        train_data = data.loc[~data["hashtag"].isin(top_hashtags["hashtag"])]
+        train_data = train_data.reset_index(drop=True)
+
 
         # plot_factory = PlotFactory.PlotFactory(db_handler, data)
         # plot_factory.hashtag_appearance_for_top_k()
 
         if CLUSTERING == "DBSCAN":
-            dbscan = DBScan(users=data, eps=0.3, MinPts=5, reduce_dimensions=True)
+            dbscan = DBScan(users=train_data, eps=0.3, MinPts=5, reduce_dimensions=True)
             labels, NumClusters = dbscan.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING == "GRUNN":
-            train_data = ioHandler.readFromCSV() # read from features.csv
-            grunn = GRUNN(train=train_data, test=data, reduce_dimensions=True)
+            grunn = GRUNN(train=train_data, test=test_data, reduce_dimensions=True)
             labels = grunn.train()
         elif CLUSTERING == "NaiveBayes":
-            train_data = ioHandler.readFromCSV()
-            nB = NaiveBayes(train=train_data, test=data, reduce_dimensions=True)
+            nB = NaiveBayes(train=train_data, test=test_data, reduce_dimensions=True)
             labels = nB.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING == "KNN":
-            train_data = ioHandler.readFromCSV()
-            knn =  KNN(train=train_data, test=data, reduce_dimensions=True)
+            knn =  KNN(train=train_data, test=test_data, reduce_dimensions=True)
             labels = knn.run(k=3)
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING =="DecisionTree":
-            train_data = ioHandler.readFromCSV()
-            dTree = DecisionTree(train=train_data, test=data, reduce_dimensions=True)
+            dTree = DecisionTree(train=train_data, test=test_data, reduce_dimensions=True)
             labels = dTree.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING =="SVM":
-            train_data = ioHandler.readFromCSV()
-            svm = SVM(train=train_data, test=data, reduce_dimensions=False)
+            svm = SVM(train=train_data, test=test_data, reduce_dimensions=False)
             labels = svm.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING =="LR":
-            train_data = ioHandler.readFromCSV()
-            lr = LR(train=train_data, test=data, reduce_dimensions=False)
+            lr = LR(train=train_data, test=test_data, reduce_dimensions=False)
             labels = lr.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING =="Random":
-            train_data = ioHandler.readFromCSV()
-            rp = RandomPredictor(train=train_data, test=data, reduce_dimensions=False)
+            rp = RandomPredictor(train=train_data, test=test_data, reduce_dimensions=False)
             labels = rp.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         elif CLUSTERING =="PriorDist":
-            train_data = ioHandler.readFromCSV()
-            pd = PriorDist(train=train_data, test=data, reduce_dimensions=False)
+            pd = PriorDist(train=train_data, test=test_data, reduce_dimensions=False)
             labels = pd.run()
-            data.loc[:, "label"] = labels
+            test_data.loc[:, "label"] = labels
         else:
             pass
