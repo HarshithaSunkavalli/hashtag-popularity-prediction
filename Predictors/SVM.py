@@ -119,7 +119,7 @@ class SVM:
         # Plot non-normalized confusion matrix
         plt.figure()
         self.plot_confusion_matrix(cnf_matrix, classes=label_names,
-                                   title='Confusion matrix, without normalization')
+                                   title='Confusion matrix, without normalization. Micro-F1: {}'.format(f1))
 
         # Plot normalized confusion matrix
         # plt.figure()
@@ -158,3 +158,4 @@ class SVM:
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
+        plt.savefig("Images/ConfusionMatrices/SVM.png", format="png")

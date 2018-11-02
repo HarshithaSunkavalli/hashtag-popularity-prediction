@@ -120,7 +120,7 @@ class DecisionTree:
         # Plot non-normalized confusion matrix
         plt.figure()
         self.plot_confusion_matrix(cnf_matrix, classes=label_names,
-                                   title='Confusion matrix, without normalization')
+                                   title='Confusion matrix, without normalization. Micro-F1: {}'.format(f1))
 
         # Plot normalized confusion matrix
         # plt.figure()
@@ -159,3 +159,4 @@ class DecisionTree:
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
+        # plt.savefig("Images/ConfusionMatrices/DecisionTree.png", format="png")

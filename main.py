@@ -15,7 +15,7 @@ from Predictors.LR import LR
 from Predictors.RandomPredictor import RandomPredictor
 from Predictors.PriorDist import PriorDist
 
-CLUSTERING = "KNN"
+CLUSTERING = "SVM"
 FEATURE_EXTRACTION = False
 CREATE_CSV = False
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
         # plot_factory = PlotFactory.PlotFactory(db_handler, data)
         # plot_factory.hashtag_appearance_for_top_k()
-
+        print("Clustering")
         if CLUSTERING == "DBSCAN":
             dbscan = DBScan(users=train_data, eps=0.3, MinPts=5, reduce_dimensions=True)
             labels, NumClusters = dbscan.run()
@@ -96,11 +96,11 @@ if __name__ == '__main__':
             labels = dTree.run()
             test_data.loc[:, "label"] = labels
         elif CLUSTERING =="SVM":
-            svm = SVM(train=train_data, test=test_data, reduce_dimensions=False)
+            svm = SVM(train=train_data, test=test_data, reduce_dimensions=True)
             labels = svm.run()
             test_data.loc[:, "label"] = labels
         elif CLUSTERING =="LR":
-            lr = LR(train=train_data, test=test_data, reduce_dimensions=False)
+            lr = LR(train=train_data, test=test_data, reduce_dimensions=True)
             labels = lr.run()
             test_data.loc[:, "label"] = labels
         elif CLUSTERING =="Random":
